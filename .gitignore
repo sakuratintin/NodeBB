@@ -78,3 +78,6 @@ test.out
 .docker/**
 !**/.gitkeep
 .aider*
+
+# 本地数据库备份（含密钥，绝不提交）
+backup/
