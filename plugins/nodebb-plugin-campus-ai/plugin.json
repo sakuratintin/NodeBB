@@ -1,0 +1,14 @@
+{
+	"id": "nodebb-plugin-campus-ai",
+	"name": "校园论坛增强",
+	"description": "AI 助手（@EVA）、搜索联想、邮箱验证码、子版块合并浏览。",
+	"url": "https://github.com/sakuratintin/NodeBB",
+	"library": "./library.js",
+	"hooks": [
+		{ "hook": "static:app.load", "method": "init" },
+		{ "hook": "action:user.create", "method": "onUserCreate" },
+		{ "hook": "action:post.save", "method": "onPostSave" },
+		{ "hook": "filter:categories.getTopicIds", "method": "getTopicIds" },
+		{ "hook": "filter:categories.getTopicCount", "method": "getTopicCount" }
+	]
+}

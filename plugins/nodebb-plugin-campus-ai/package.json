@@ -1,0 +1,10 @@
+{
+  "name": "nodebb-plugin-campus-ai",
+  "version": "1.0.0",
+  "description": "校园论坛 AI 助手：右下角悬浮聊天面板，后端代理 DeepSeek（OpenAI 兼容）接口",
+  "main": "library.js",
+  "license": "MIT",
+  "nbbpm": {
+    "compatibility": "^4.0.0"
+  }
+}

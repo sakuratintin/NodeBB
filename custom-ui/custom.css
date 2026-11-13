@@ -1,0 +1,2011 @@
+// ===========================================================
+//  校园论坛 · 动效与反馈样式（通过 NodeBB 后台「自定义 CSS」注入）
+//  设计原则：轻微、快速（180~280ms）、不做弹窗式打扰、
+//            尊重系统的「减少动态效果」偏好。
+// ===========================================================
+
+:root {
+	--campus-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+	--campus-shadow-hover: 0 8px 24px rgba(17, 24, 39, 0.10);
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+// 1. 通用过渡：按钮、链接、卡片都“跟手”一点
+.btn,
+.page-link,
+.nav-link,
+.dropdown-item,
+.list-group-item,
+.card,
+.topic-list-item,
+.category-item,
+a {
+	transition:
+		color 0.18s var(--campus-ease),
+		background-color 0.18s var(--campus-ease),
+		border-color 0.18s var(--campus-ease),
+		box-shadow 0.18s var(--campus-ease),
+		transform 0.18s var(--campus-ease);
+}
+
+// 2. 按钮：悬停微微抬起，按下轻轻回弹（“我点到了”的反馈）
+.btn {
+	position: relative;
+
+	&:not(:disabled):hover {
+		transform: translateY(-1px);
+	}
+
+	&:not(:disabled):active {
+		transform: translateY(0) scale(0.98);
+	}
+}
+
+// 3. 卡片/列表：悬停上浮 + 阴影加深
+.category-item,
+.topic-list-item,
+.card,
+.list-group-item {
+	&:hover {
+		transform: translateY(-2px);
+		box-shadow: var(--campus-shadow-hover) !important;
+	}
+}
+
+// 4. 页面切换时的淡入上移（很轻，不会晃眼）
+#content.anim-in {
+	animation: campus-fade-up 0.28s var(--campus-ease) both;
+}
+
+@keyframes campus-fade-up {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+// 5. 点赞/收藏：点一下“弹”一下
+.pop {
+	animation: campus-pop 0.32s var(--campus-ease);
+}
+
+@keyframes campus-pop {
+	0% { transform: scale(1); }
+	40% { transform: scale(1.25); }
+	100% { transform: scale(1); }
+}
+
+// 6. 未读小红点：缓慢呼吸，不刺眼
+.unread-count,
+[component="notifications/icon"] .badge {
+	animation: campus-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes campus-pulse {
+	0%, 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.45); }
+	50% { box-shadow: 0 0 0 6px rgba(220, 53, 69, 0); }
+}
+
+// 7. 顶部栏滚动后出现淡阴影，暗示“内容在下面”
+.navbar.dsh-scrolled {
+	box-shadow: 0 6px 18px rgba(17, 24, 39, 0.08) !important;
+}
+
+// 8. 回到顶部按钮（由自定义 JS 创建）
+#dsh-top {
+	position: fixed;
+	right: 20px;
+	bottom: 24px;
+	z-index: 1040;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	color: #fff;
+	cursor: pointer;
+	background: var(--bs-primary, #0d6efd);
+	border: 0;
+	border-radius: 50%;
+	box-shadow: 0 6px 20px rgba(17, 24, 39, 0.18);
+	opacity: 0;
+	transform: translateY(10px) scale(0.9);
+	pointer-events: none;
+	transition:
+		opacity 0.2s var(--campus-ease),
+		transform 0.2s var(--campus-ease),
+		box-shadow 0.2s var(--campus-ease);
+
+	&.show {
+		opacity: 1;
+		transform: none;
+		pointer-events: auto;
+	}
+
+	&:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 10px 26px rgba(17, 24, 39, 0.24);
+	}
+
+	&:active {
+		transform: scale(0.95);
+	}
+}
+
+// 9. 图片加载进来时淡入，避免“咔”地跳出
+[component="post/content"] img {
+	animation: campus-image-in 0.35s ease both;
+}
+
+@keyframes campus-image-in {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+// 10. 输入框聚焦时柔和光圈（电脑端好看的细节）
+.form-control:focus,
+.form-select:focus {
+	box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+// 11. 无障碍：用户系统里关掉了动画，就全部关掉
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+// ===========================================================
+//  12. 全站列表卡片：统一圆角 + 悬停 + 按下反馈（PC / 手机通用）
+// ===========================================================
+
+// 列表容器：卡片之间留出缝隙，不再是“一条线一条线”
+ul.topics-list,
+.categories-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+// 卡片皮肤：版块列表 + 主题列表共用同一套
+.categories-list > li[component="categories/category"],
+ul.topics-list > li.category-item {
+	padding: 16px 18px !important;
+	cursor: pointer;
+	background: #fff;
+	border: 1px solid rgba(17, 24, 39, 0.07) !important;
+	border-bottom: 1px solid rgba(17, 24, 39, 0.07) !important;
+	border-radius: 18px;
+	box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+	transition:
+		transform 0.22s var(--campus-ease),
+		box-shadow 0.22s var(--campus-ease),
+		border-color 0.22s var(--campus-ease),
+		background-color 0.2s var(--campus-ease);
+
+	&:hover {
+		transform: translateY(-3px);
+		background: #fffdfe;
+		border-color: rgba(247, 96, 138, 0.35) !important;
+		box-shadow: 0 14px 30px rgba(17, 24, 39, 0.1);
+	}
+
+	// 按下瞬间轻轻“陷”一下，松手才跳转
+	&:active,
+	&.is-pressed {
+		transform: translateY(-1px) scale(0.995);
+		box-shadow: 0 6px 16px rgba(17, 24, 39, 0.1);
+	}
+
+	// 版块左侧的方形图标
+	.icon {
+		border-radius: 14px !important;
+		box-shadow: 0 4px 10px rgba(17, 24, 39, 0.1);
+		transition: transform 0.26s var(--campus-ease), box-shadow 0.26s var(--campus-ease);
+	}
+
+	&:hover .icon {
+		transform: scale(1.06) rotate(-2deg);
+		box-shadow: 0 8px 18px rgba(17, 24, 39, 0.16);
+	}
+
+	// 主题列表左侧的头像
+	.avatar {
+		transition: transform 0.26s var(--campus-ease), box-shadow 0.26s var(--campus-ease);
+	}
+
+	&:hover .avatar {
+		transform: scale(1.05);
+		box-shadow: 0 6px 14px rgba(17, 24, 39, 0.16);
+	}
+
+	// 标题
+	.title a {
+		transition: color 0.18s var(--campus-ease);
+	}
+
+	&:hover .title a {
+		color: #f7608a !important;
+	}
+
+	// 右侧「主题 / 帖子」小方卡
+	.stats .card {
+		background: #fbf7f8;
+		border-radius: 12px !important;
+		transition: background-color 0.2s var(--campus-ease), transform 0.2s var(--campus-ease);
+	}
+
+	&:hover .stats .card {
+		background: #fdf0f4;
+		transform: translateY(-1px);
+	}
+
+	// 右侧最新回复的竖线
+	.lastpost {
+		transition: border-color 0.2s var(--campus-ease);
+	}
+}
+
+// 主题列表里的分类徽章、标签：改成胶囊圆角
+li.category-item .badge,
+.topic-tags .tag,
+.topic-tags .tag-item,
+.category-item [component="topic/tags"] a {
+	border-radius: 999px !important;
+}
+
+// 用户列表（卡片网格）
+.users-container .card,
+.users-container > div > .card {
+	border: 1px solid rgba(17, 24, 39, 0.07) !important;
+	border-radius: 18px !important;
+	transition:
+		transform 0.22s var(--campus-ease),
+		box-shadow 0.22s var(--campus-ease),
+		border-color 0.22s var(--campus-ease);
+
+	&:hover {
+		transform: translateY(-3px);
+		border-color: rgba(247, 96, 138, 0.35) !important;
+		box-shadow: 0 14px 30px rgba(17, 24, 39, 0.1);
+	}
+
+	&:active {
+		transform: translateY(-1px) scale(0.995);
+	}
+}
+
+// 通知 / 消息里的一行行条目
+[component="notifications/list"] li,
+.notifications-list li,
+.chat-list li {
+	border-radius: 14px;
+	transition: background-color 0.18s var(--campus-ease), transform 0.18s var(--campus-ease);
+
+	&:hover {
+		background: #fdf7f9;
+	}
+
+	&:active {
+		transform: scale(0.995);
+	}
+}
+
+// 手机上：留白收紧、圆角略小，避免“卡片挤在一起”
+@media (max-width: 767.98px) {
+	.categories-list > li[component="categories/category"],
+	ul.topics-list > li.category-item {
+		padding: 13px 14px !important;
+		border-radius: 16px;
+	}
+
+	// 触屏没有 hover，改用按下去的即时反馈
+	.categories-list > li[component="categories/category"]:active,
+	ul.topics-list > li.category-item:active {
+		background: #fdf7f9;
+	}
+}
+
+// ===========================================================
+//  13. 左侧导航栏：胶囊圆角、粉色高亮、底部皮肤选择器收纳
+// ===========================================================
+nav[component="sidebar/left"].sidebar {
+	padding-top: 10px;
+	background: #fff !important;
+	border-right: 0 !important;
+	box-shadow: 4px 0 24px rgba(17, 24, 39, 0.04);
+
+	#main-nav {
+		padding: 4px 0 14px;
+		gap: 6px !important;
+
+		.nav-item {
+			margin: 0 10px !important;
+		}
+
+		.navigation-link {
+			position: relative;
+			padding: 9px 12px;
+			font-size: 14px;
+			color: #4b5563;
+			border-radius: 12px;
+			transition:
+				background-color 0.18s var(--campus-ease),
+				color 0.18s var(--campus-ease),
+				transform 0.18s var(--campus-ease),
+				box-shadow 0.18s var(--campus-ease);
+
+			i {
+				width: 18px;
+				color: #9aa3af;
+				text-align: center;
+				transition: color 0.18s var(--campus-ease), transform 0.18s var(--campus-ease);
+			}
+
+			.nav-text {
+				letter-spacing: 0.2px;
+			}
+
+			.badge {
+				border-radius: 999px !important;
+				font-size: 11px;
+			}
+
+			&:hover {
+				color: #f7608a;
+				background: #fdf2f6;
+				transform: translateX(2px);
+
+				i {
+					color: #f7608a;
+					transform: scale(1.08);
+				}
+			}
+
+			&:active {
+				background: #fce7ee;
+				transform: translateX(2px) scale(0.985);
+			}
+
+			// 当前所在页：常驻粉色底
+			&.is-current {
+				font-weight: 600;
+				color: #f7608a;
+				background: #fdeef3;
+				box-shadow: inset 3px 0 0 #f7608a;
+
+				i {
+					color: #f7608a;
+				}
+			}
+		}
+	}
+
+	// 底部那串 24 种 bootswatch 皮肤，对校园论坛是噪音，先收起来
+	[component="skinSwitcher"] {
+		display: none !important;
+	}
+
+	// 折叠按钮：柔和圆角
+	.sidebar-toggle-container {
+		padding: 6px 10px 12px;
+		border-top: 1px solid rgba(17, 24, 39, 0.06);
+
+		.nav-link {
+			border-radius: 10px;
+			transition: background-color 0.18s var(--campus-ease), color 0.18s var(--campus-ease);
+
+			&:hover {
+				color: #f7608a;
+				background: #fdf2f6;
+			}
+		}
+	}
+}
+
+// 手机 / 平板：抽屉里的导航字号和内边距加大，手指好点
+@media (max-width: 991.98px) {
+	.sidebar {
+		.navigation-link {
+			padding: 11px 14px;
+			font-size: 15px;
+			border-radius: 12px;
+		}
+	}
+}
+
+// ===========================================================
+//  14. 右侧栏（PC）+ 手机底部导航条
+// ===========================================================
+nav[component="sidebar/right"].sidebar {
+	padding-top: 10px;
+	background: #fff !important;
+	border-left: 0 !important;
+	box-shadow: -4px 0 24px rgba(17, 24, 39, 0.04);
+
+	#logged-out-menu,
+	#logged-in-menu {
+		padding: 4px 0 12px;
+		gap: 6px !important;
+
+		> li {
+			margin: 0 10px !important;
+		}
+
+		// 分隔线换成更轻的虚点线，不再"一条硬杠"
+		> hr {
+			margin: 4px 12px !important;
+			border: 0;
+			border-top: 1px dashed rgba(17, 24, 39, 0.08);
+			opacity: 1;
+		}
+	}
+
+	.nav-link {
+		padding: 9px 12px;
+		font-size: 14px;
+		color: #4b5563;
+		border-radius: 12px;
+		transition:
+			background-color 0.18s var(--campus-ease),
+			color 0.18s var(--campus-ease),
+			transform 0.18s var(--campus-ease);
+
+		i {
+			width: 18px;
+			color: #9aa3af;
+			text-align: center;
+			transition: color 0.18s var(--campus-ease), transform 0.18s var(--campus-ease);
+		}
+
+		&:hover {
+			color: #f7608a;
+			background: #fdf2f6;
+			transform: translateX(-2px);
+
+			i {
+				color: #f7608a;
+				transform: scale(1.08);
+			}
+		}
+
+		&:active {
+			background: #fce7ee;
+			transform: scale(0.985);
+		}
+	}
+
+	// 登录：描边按钮；注册：实心粉按钮（右侧栏的"主行动"）
+	a[href$="/login"].nav-link {
+		justify-content: center;
+		color: #f7608a;
+		border: 1px solid #f7c9d8;
+
+		&:hover {
+			color: #f7608a;
+			background: #fdf2f6;
+		}
+	}
+
+	a[href$="/register"].nav-link {
+		justify-content: center;
+		color: #fff !important;
+		background: linear-gradient(135deg, #ff8fb1, #f7608a);
+		border: 1px solid transparent;
+		box-shadow: 0 6px 16px rgba(247, 96, 138, 0.3);
+
+		i {
+			color: #fff;
+		}
+
+		&:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 10px 22px rgba(247, 96, 138, 0.38);
+
+			i {
+				color: #fff;
+			}
+		}
+
+		&:active {
+			transform: translateY(0) scale(0.98);
+		}
+	}
+
+	// 搜索提示块
+	[component="sidebar/search"] .d-flex {
+		padding: 8px 12px !important;
+		color: #9aa3af;
+		cursor: pointer;
+		border-radius: 12px;
+		transition: background-color 0.18s var(--campus-ease), color 0.18s var(--campus-ease);
+
+		&:hover {
+			color: #f7608a;
+			background: #fdf2f6;
+		}
+	}
+
+	// 页脚：收小、降低存在感
+	[data-widget-area="sidebar-footer"] {
+		padding: 0 12px;
+		font-size: 11px;
+		line-height: 1.6;
+		opacity: 0.75;
+	}
+}
+
+// ---------- 手机底部导航条：悬浮胶囊 ----------
+.bottombar {
+	padding-bottom: env(safe-area-inset-bottom, 0);
+	background: transparent !important;
+	pointer-events: none;
+
+	> * {
+		pointer-events: auto;
+	}
+
+	.bottombar-nav {
+		width: auto !important;
+		margin: 0 10px 10px;
+		padding: 8px 14px !important;
+		background: rgba(255, 255, 255, 0.92) !important;
+		border: 1px solid rgba(17, 24, 39, 0.06) !important;
+		border-radius: 999px;
+		box-shadow: 0 8px 28px rgba(17, 24, 39, 0.14);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+
+		a,
+		.pointer {
+			padding: 4px 6px;
+			color: #4b5563;
+			border-radius: 10px;
+			transition: color 0.16s var(--campus-ease), transform 0.16s var(--campus-ease), background-color 0.16s;
+
+			&:active {
+				color: #f7608a;
+				background: #fdf2f6;
+				transform: scale(0.92);
+			}
+		}
+
+		.fa,
+		.avatar {
+			font-size: 18px;
+		}
+	}
+
+	// 手机端的分页/回到顶部小条，也做成圆角浮起
+	.navigator-mobile .pagination-block {
+		border-radius: 999px !important;
+		overflow: hidden;
+		box-shadow: 0 6px 18px rgba(17, 24, 39, 0.1);
+
+		.progress-bar {
+			border-radius: 0 !important;
+			opacity: 0.35;
+		}
+	}
+}
+
+// 有底部导航时，给页面留出安全距离，避免内容被遮住
+@media (max-width: 991.98px) {
+	body {
+		padding-bottom: 64px;
+	}
+}
+
+// ===========================================================
+//  15. 搜索：左栏搜索框、联想面板、UID 徽章、搜索页
+// ===========================================================
+
+// 右侧栏原来的搜索入口，挪到左边后这里就不需要了
+[component="sidebar/right"] [component="sidebar/search"] {
+	display: none !important;
+}
+
+.campus-nav-search-item {
+	position: relative;
+	padding: 0 10px 4px;
+}
+
+.campus-search {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	padding: 8px 12px;
+	background: #faf6f8;
+	border: 1px solid #f0dfe6;
+	border-radius: 12px;
+	transition: border-color 0.18s var(--campus-ease), box-shadow 0.18s var(--campus-ease), background-color 0.18s var(--campus-ease);
+
+	&:focus-within {
+		background: #fff;
+		border-color: #f7a8c4;
+		box-shadow: 0 0 0 3px rgba(247, 168, 196, 0.22);
+	}
+}
+
+.campus-search-icon {
+	flex-shrink: 0;
+	font-size: 13px;
+	color: #b9a2ac;
+}
+
+.campus-search-input {
+	flex: 1;
+	min-width: 0;
+	padding: 0;
+	font-size: 13px;
+	color: #4b5563;
+	background: transparent;
+	border: 0;
+	outline: none;
+
+	&::placeholder {
+		color: #b9a2ac;
+	}
+}
+
+// 侧栏收起时：只留一个放大镜，点一下展开
+.sidebar:not(.open) {
+	.campus-nav-search-item {
+		padding: 0 8px 4px;
+	}
+
+	.campus-search {
+		justify-content: center;
+		padding: 9px 0;
+	}
+
+	.campus-search-input {
+		display: none;
+	}
+}
+
+// 联想结果面板
+.campus-search-results {
+	position: fixed;
+	z-index: 1080;
+	width: 300px;
+	max-height: 320px;
+	overflow-y: auto;
+	padding: 6px;
+	background: #fff;
+	border: 1px solid rgba(17, 24, 39, 0.08);
+	border-radius: 14px;
+	box-shadow: 0 16px 36px rgba(17, 24, 39, 0.16);
+}
+
+.campus-search-hit {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	padding: 8px 10px;
+	color: #374151;
+	text-decoration: none;
+	border-radius: 10px;
+	transition: background-color 0.16s var(--campus-ease), color 0.16s var(--campus-ease);
+
+	&:hover {
+		color: #f7608a;
+		background: #fdf2f6;
+	}
+}
+
+.campus-hit-avatar {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	font-size: 12px;
+	font-weight: 600;
+	color: #fff;
+	background: #f7a8c4;
+	border-radius: 50%;
+}
+
+.campus-hit-name {
+	flex: 1;
+	overflow: hidden;
+	font-size: 13px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.campus-hit-uid {
+	font-size: 11px;
+	color: #9aa3af;
+}
+
+// UID 徽章
+.campus-uid {
+	display: inline-block;
+	padding: 1px 8px;
+	margin-left: 6px;
+	font-size: 11px;
+	font-weight: 600;
+	color: #b05a78;
+	text-decoration: none;
+	vertical-align: middle;
+	background: #fdf0f4;
+	border: 1px solid #f7d3e0;
+	border-radius: 999px;
+	transition: background-color 0.16s var(--campus-ease), color 0.16s var(--campus-ease);
+
+	&:hover {
+		color: #f7608a;
+		background: #fce0ea;
+	}
+}
+
+.campus-uid-profile {
+	padding: 2px 10px;
+	margin-left: 10px;
+	font-size: 12px;
+}
+
+// 搜索页：把左侧表单做成一张卡，输入框统一圆角
+.search {
+	#advanced-search > div:first-child {
+		padding: 16px !important;
+		background: #fff;
+		border: 1px solid rgba(17, 24, 39, 0.07) !important;
+		border-radius: 16px;
+		box-shadow: 0 2px 8px rgba(17, 24, 39, 0.04);
+	}
+
+	#search-input {
+		padding: 10px 12px !important;
+		border-radius: 10px !important;
+	}
+
+	#search-in,
+	#match-words-filter,
+	#show-results-as {
+		border-radius: 10px !important;
+	}
+
+	.btn-primary {
+		border-radius: 10px !important;
+	}
+
+	.post-content,
+	.search-result {
+		border-radius: 14px;
+	}
+}
+
+// ===========================================================
+//  16. 邮箱验证码弹窗
+// ===========================================================
+.campus-verify-mask {
+	position: fixed;
+	inset: 0;
+	z-index: 1090;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+	background: rgba(17, 24, 39, 0.42);
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+	animation: campus-fade-up 0.2s var(--campus-ease) both;
+}
+
+.campus-verify-card {
+	width: 100%;
+	max-width: 420px;
+	padding: 28px 26px 22px;
+	text-align: center;
+	background: #fff;
+	border-radius: 22px;
+	box-shadow: 0 24px 60px rgba(17, 24, 39, 0.28);
+
+	h3 {
+		margin: 12px 0 6px;
+		font-size: 20px;
+		font-weight: 700;
+		color: #1f2937;
+	}
+}
+
+.campus-verify-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 54px;
+	height: 54px;
+	font-size: 22px;
+	color: #fff;
+	background: linear-gradient(135deg, #ff8fb1, #f7608a);
+	border-radius: 50%;
+	box-shadow: 0 10px 24px rgba(247, 96, 138, 0.35);
+}
+
+.campus-verify-tip {
+	margin: 0 0 16px;
+	font-size: 14px;
+	line-height: 1.7;
+	color: #6b7280;
+}
+
+.campus-verify-input {
+	width: 100%;
+	padding: 12px 10px;
+	font-size: 26px;
+	font-weight: 700;
+	letter-spacing: 10px;
+	color: #1f2937;
+	text-align: center;
+	background: #faf6f8;
+	border: 1px solid #f0dfe6;
+	border-radius: 14px;
+	outline: none;
+	transition: border-color 0.18s var(--campus-ease), box-shadow 0.18s var(--campus-ease), background-color 0.18s;
+
+	&:focus {
+		background: #fff;
+		border-color: #f7a8c4;
+		box-shadow: 0 0 0 4px rgba(247, 168, 196, 0.22);
+	}
+
+	&::placeholder {
+		color: #e3d3da;
+	}
+}
+
+.campus-verify-msg {
+	min-height: 20px;
+	margin: 10px 0 0;
+	font-size: 13px;
+	color: #6b7280;
+
+	&.is-error {
+		color: #d92d20;
+	}
+
+	&.is-ok {
+		color: #079455;
+	}
+}
+
+.campus-verify-actions {
+	display: flex;
+	gap: 10px;
+	margin-top: 14px;
+}
+
+.campus-verify-resend,
+.campus-verify-submit {
+	flex: 1;
+	padding: 11px 14px;
+	font-size: 15px;
+	font-weight: 600;
+	cursor: pointer;
+	border-radius: 12px;
+	transition: transform 0.16s var(--campus-ease), box-shadow 0.16s var(--campus-ease), background-color 0.16s;
+
+	&:active {
+		transform: scale(0.98);
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.6;
+	}
+}
+
+.campus-verify-resend {
+	color: #b05a78;
+	background: #fdf2f6;
+	border: 1px solid #f7d3e0;
+}
+
+.campus-verify-submit {
+	color: #fff;
+	background: linear-gradient(135deg, #ff8fb1, #f7608a);
+	border: 0;
+	box-shadow: 0 8px 20px rgba(247, 96, 138, 0.3);
+
+	&:hover {
+		box-shadow: 0 12px 26px rgba(247, 96, 138, 0.4);
+	}
+}
+
+.campus-verify-foot {
+	margin: 14px 0 0;
+	font-size: 12px;
+	color: #9aa3af;
+}
+
+@media (max-width: 575.98px) {
+	.campus-verify-card {
+		padding: 22px 18px 18px;
+		border-radius: 18px;
+	}
+
+	.campus-verify-input {
+		font-size: 22px;
+		letter-spacing: 8px;
+	}
+}
+
+// ===========================================================
+//  17. 登录 / 注册页美化
+// ===========================================================
+.page-login,
+.page-register {
+	background:
+		radial-gradient(620px 380px at 12% 6%, rgba(247, 168, 196, 0.16), transparent 62%),
+		radial-gradient(700px 420px at 88% 4%, rgba(255, 209, 102, 0.14), transparent 62%),
+		linear-gradient(180deg, #fffafc 0%, #ffffff 42%);
+	background-attachment: fixed;
+}
+
+.row.login,
+.row.register {
+	align-items: flex-start;
+	justify-content: center;
+	padding: 48px 16px 72px;
+	min-height: calc(100vh - 180px);
+
+	> div {
+		width: 100%;
+		max-width: 440px;
+	}
+
+	// NodeBB 的登录/注册表单外面套了好几层 Bootstrap 栅格列，
+	// 在窄卡片里会被压成一条竖条 —— 这里统一拉直成整行
+	[class*="col-"] {
+		flex: 0 0 100% !important;
+		width: 100% !important;
+		max-width: 100% !important;
+		padding-right: 0 !important;
+		padding-left: 0 !important;
+	}
+
+	.row {
+		gap: 0 !important;
+		margin-right: 0 !important;
+		margin-left: 0 !important;
+	}
+
+	h2 {
+		margin-bottom: 18px !important;
+		font-size: 26px;
+		font-weight: 700;
+		letter-spacing: -0.3px;
+		color: #1f2937;
+	}
+
+	// 表单卡片
+	.login-block,
+	.register-block {
+		padding: 26px 24px 22px;
+		background: #fff;
+		border: 1px solid rgba(17, 24, 39, 0.06);
+		border-radius: 22px;
+		box-shadow: 0 18px 48px rgba(17, 24, 39, 0.09);
+	}
+
+	label {
+		margin-bottom: 2px;
+		font-size: 13px;
+		font-weight: 600;
+		color: #4b5563;
+	}
+
+	// 输入框
+	.form-control {
+		padding: 11px 14px;
+		font-size: 15px;
+		background: #faf6f8;
+		border: 1px solid #f0dfe6;
+		border-radius: 12px;
+		transition: border-color 0.18s var(--campus-ease), box-shadow 0.18s var(--campus-ease), background-color 0.18s;
+
+		&:focus {
+			background: #fff;
+			border-color: #f7a8c4;
+			box-shadow: 0 0 0 4px rgba(247, 168, 196, 0.2);
+		}
+
+		&::placeholder {
+			color: #b9a2ac;
+		}
+	}
+
+	.form-text {
+		font-size: 12px;
+		color: #9aa3af;
+	}
+
+	// 主按钮：粉色渐变、通栏
+	.btn-primary {
+		width: 100%;
+		padding: 12px 16px;
+		font-size: 16px;
+		font-weight: 600;
+		color: #fff;
+		background: linear-gradient(135deg, #ff8fb1, #f7608a);
+		border: 0;
+		border-radius: 12px;
+		box-shadow: 0 10px 24px rgba(247, 96, 138, 0.3);
+		transition: transform 0.18s var(--campus-ease), box-shadow 0.18s var(--campus-ease);
+
+		&:hover {
+			color: #fff;
+			transform: translateY(-1px);
+			box-shadow: 0 14px 30px rgba(247, 96, 138, 0.38);
+		}
+
+		&:active {
+			transform: translateY(0) scale(0.99);
+		}
+
+		&:disabled {
+			opacity: 0.7;
+		}
+	}
+
+	// 「已经有账号？登录」那块
+	hr {
+		margin: 18px 0 14px;
+		border-color: rgba(17, 24, 39, 0.06);
+	}
+
+	.text-sm {
+		font-size: 13px;
+		color: #6b7280;
+	}
+
+	.btn-outline-light {
+		margin-top: 8px;
+		font-size: 14px;
+		font-weight: 600;
+		color: #f7608a !important;
+		background: #fdf2f6;
+		border: 1px solid #f7d3e0 !important;
+		border-radius: 12px;
+		transition: background-color 0.18s var(--campus-ease), transform 0.18s var(--campus-ease);
+
+		&:hover {
+			background: #fce7ee;
+			transform: translateY(-1px);
+		}
+	}
+
+	// 忘记密码链接
+	#reset-link {
+		color: #b05a78 !important;
+		text-decoration-color: #f7d3e0 !important;
+	}
+
+	// 错误提示
+	.alert-danger {
+		font-size: 14px;
+		border-radius: 12px;
+	}
+}
+
+// 注册页两个额外字段（邮箱验证提示等）与主体间距
+.row.register {
+	.register-feedback {
+		min-height: 0;
+		font-size: 12px;
+	}
+
+	.regFormEntry {
+		margin-bottom: 2px !important;
+	}
+}
+
+@media (max-width: 767.98px) {
+	.row.login,
+	.row.register {
+		padding: 24px 14px 96px;
+
+		h2 {
+			font-size: 22px;
+		}
+
+		.login-block,
+		.register-block {
+			padding: 20px 18px 18px;
+			border-radius: 18px;
+		}
+
+		.form-control {
+			padding: 13px 14px;
+			font-size: 16px;
+		}
+
+		.btn-primary {
+			padding: 14px 16px;
+			font-size: 16px;
+		}
+	}
+}
+
+// ===========================================================
+//  18. 板块页：头部卡片 + 子版块网格 + 工具条
+// ===========================================================
+.category {
+	// 板块头部信息
+	.category-header {
+		padding: 18px 20px;
+		margin-bottom: 14px;
+		background: #fff;
+		border: 1px solid rgba(17, 24, 39, 0.06);
+		border-radius: 18px;
+		box-shadow: 0 2px 10px rgba(17, 24, 39, 0.04);
+
+		.icon {
+			border-radius: 14px !important;
+		}
+
+		.badge {
+			border-radius: 999px !important;
+		}
+	}
+
+	// 子版块区
+	.subcategory {
+		margin-bottom: 16px;
+
+		h3 {
+			margin: 6px 0 10px;
+			font-size: 14px;
+			font-weight: 600;
+			color: #6b7280;
+		}
+
+		[component="category/subcategory/container"] {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+			gap: 12px;
+
+			// 第一个占位 li 里只有一条 <hr>
+			> li:first-child {
+				display: none;
+			}
+
+			> li[component="categories/category"] {
+				padding: 13px 15px !important;
+				background: #fff;
+				border: 1px solid rgba(17, 24, 39, 0.07) !important;
+				border-bottom: 1px solid rgba(17, 24, 39, 0.07) !important;
+				border-radius: 16px;
+				box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+				transition:
+					transform 0.2s var(--campus-ease),
+					box-shadow 0.2s var(--campus-ease),
+					border-color 0.2s var(--campus-ease);
+
+				&:hover {
+					transform: translateY(-2px);
+					border-color: rgba(247, 96, 138, 0.35) !important;
+					box-shadow: 0 12px 26px rgba(17, 24, 39, 0.09);
+				}
+
+				&:active {
+					transform: translateY(-1px) scale(0.995);
+				}
+
+				.icon {
+					width: 34px !important;
+					height: 34px !important;
+					font-size: 16px !important;
+					border-radius: 12px !important;
+				}
+
+				.title {
+					font-size: 15px !important;
+				}
+
+				// 子版块卡片里不显示「最新回复」细节，保持清爽
+				[component="topic/teaser"] {
+					display: none !important;
+				}
+			}
+		}
+	}
+
+	// 发帖按钮统一成粉色
+	[component="category/post"],
+	.btn-primary {
+		font-weight: 600;
+		background: linear-gradient(135deg, #ff8fb1, #f7608a) !important;
+		border-color: transparent !important;
+		border-radius: 10px !important;
+		box-shadow: 0 8px 18px rgba(247, 96, 138, 0.26);
+
+		&:hover {
+			box-shadow: 0 12px 24px rgba(247, 96, 138, 0.34);
+		}
+	}
+}
+
+@media (max-width: 767.98px) {
+	.category {
+		.category-header {
+			padding: 14px 16px;
+			border-radius: 16px;
+		}
+
+		.subcategory [component="category/subcategory/container"] {
+			grid-template-columns: 1fr;
+			gap: 10px;
+
+			> li[component="categories/category"] {
+				padding: 12px 14px !important;
+
+				// 手机上子版块排成一行：图标 + 名称 + 计数
+				.d-flex {
+					flex-wrap: nowrap;
+				}
+
+				.title {
+					font-size: 15px !important;
+				}
+			}
+		}
+	}
+}
+
+/* ===========================================================
+   19. 发帖框（Composer）美化 + @EVA 按钮
+   =========================================================== */
+[component="composer"].composer {
+	padding: 8px 6px 4px;
+	background: transparent;
+}
+
+.composer .composer-container {
+	gap: 10px;
+	padding: 16px;
+	background: #fff;
+	border: 1px solid rgba(17, 24, 39, 0.06);
+	border-radius: 18px;
+	box-shadow: 0 12px 32px rgba(17, 24, 39, 0.07);
+}
+
+// 标题输入
+.composer .title-container .title {
+	padding: 12px 14px;
+	font-size: 17px;
+	font-weight: 600;
+	color: #1f2937;
+	background: #faf6f8;
+	border: 1px solid #f0dfe6;
+	border-radius: 12px;
+	transition: border-color 0.18s var(--campus-ease), box-shadow 0.18s var(--campus-ease), background-color 0.18s;
+
+	&:focus {
+		background: #fff;
+		border-color: #f7a8c4;
+		box-shadow: 0 0 0 4px rgba(247, 168, 196, 0.2);
+	}
+
+	&::placeholder {
+		font-weight: 500;
+		color: #b9a2ac;
+	}
+}
+
+// 工具栏
+.composer .formatting-bar {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	padding: 6px 10px;
+	background: #fdf7fa;
+	border: 1px solid #f4e8ee;
+	border-radius: 12px;
+}
+
+.composer .formatting-group {
+	gap: 2px;
+
+	.btn {
+		padding: 5px 8px;
+		color: #6b7280;
+		border-radius: 8px;
+		transition: background-color 0.16s var(--campus-ease), color 0.16s var(--campus-ease);
+
+		&:hover {
+			color: #f7608a;
+			background: #fce7ee;
+		}
+	}
+}
+
+// 编辑区 / 预览区
+.composer .write-preview-container {
+	gap: 12px;
+}
+
+.composer .write-container textarea.write {
+	min-height: 240px;
+	padding: 14px;
+	font-size: 15px;
+	line-height: 1.85;
+	color: #1f2937;
+	background: #fff;
+	border: 1px solid #f0dfe6;
+	border-radius: 12px;
+	transition: border-color 0.18s var(--campus-ease), box-shadow 0.18s var(--campus-ease);
+
+	&:focus {
+		border-color: #f7a8c4;
+		box-shadow: 0 0 0 4px rgba(247, 168, 196, 0.18);
+	}
+
+	&::placeholder {
+		color: #b9a2ac;
+	}
+}
+
+.composer .preview-container .preview {
+	padding: 14px;
+	background: #fdf9fb;
+	border: 1px solid #f4e8ee;
+	border-radius: 12px;
+}
+
+// 提交 / 撤销按钮
+.composer [component="composer/submit/container"] .btn-primary,
+.composer .composer-submit.btn-primary {
+	min-width: 92px;
+	font-weight: 600;
+	background: linear-gradient(135deg, #ff8fb1, #f7608a) !important;
+	border-color: transparent !important;
+	border-radius: 10px !important;
+	box-shadow: 0 8px 18px rgba(247, 96, 138, 0.28);
+
+	&:hover {
+		box-shadow: 0 12px 24px rgba(247, 96, 138, 0.36);
+	}
+}
+
+.composer [component="composer/discard"],
+.composer .btn-ghost {
+	border-radius: 10px;
+	color: #6b7280;
+
+	&:hover {
+		color: #f7608a;
+		background: #fdf2f6;
+	}
+}
+
+// 我加的「@EVA」按钮
+.campus-composer-eva {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+	margin-left: auto;
+	padding: 5px 12px;
+	color: #b05a78;
+	font-size: 12.5px;
+	font-weight: 600;
+	cursor: pointer;
+	background: #fdf2f6;
+	border: 1px solid #f7d3e0;
+	border-radius: 999px;
+	transition: background-color 0.16s var(--campus-ease), transform 0.16s var(--campus-ease);
+
+	&:hover {
+		background: #fce7ee;
+		transform: translateY(-1px);
+	}
+
+	&:active {
+		transform: scale(0.97);
+	}
+}
+
+@media (max-width: 767.98px) {
+	.composer .composer-container {
+		padding: 12px;
+		border-radius: 14px;
+	}
+
+	.composer .write-container textarea.write {
+		min-height: 180px;
+		font-size: 16px;
+	}
+
+	.campus-composer-eva {
+		padding: 5px 10px;
+		font-size: 12px;
+	}
+}
+/* ===========================================================
+   20. 子版块卡片排版修复：横向舒展，不再挤成一条
+   =========================================================== */
+.category .subcategory [component="category/subcategory/container"] {
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.campus-sub-card {
+	display: flex !important;
+	gap: 12px;
+	align-items: flex-start;
+	padding: 14px 16px !important;
+	background: #fff;
+	border: 1px solid rgba(17, 24, 39, 0.07) !important;
+	border-radius: 16px !important;
+	box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+	transition: transform 0.2s var(--campus-ease), box-shadow 0.2s var(--campus-ease), border-color 0.2s var(--campus-ease);
+
+	&:hover {
+		transform: translateY(-2px);
+		border-color: rgba(247, 96, 138, 0.35) !important;
+		box-shadow: 0 12px 26px rgba(17, 24, 39, 0.09);
+	}
+
+	// 右侧那一列「统计 + 最新回复」在窄卡片里没地方，直接隐藏
+	> .col-lg-5 {
+		display: none !important;
+	}
+
+	> .col-lg-7 {
+		flex: 1 1 auto;
+		width: 100% !important;
+		max-width: 100%;
+	}
+
+	.flex-grow-1 {
+		min-width: 0;
+	}
+
+	.title {
+		width: auto !important;
+		font-size: 15.5px !important;
+		line-height: 1.5;
+	}
+
+	.title a {
+		font-weight: 600;
+	}
+
+	// 手机端那两个小徽章也隐藏（数字已经放到标题下方）
+	.d-lg-none {
+		display: none !important;
+	}
+
+	.campus-sub-meta {
+		margin-top: 3px;
+		font-size: 12px;
+		color: #9aa3af;
+		letter-spacing: 0.2px;
+	}
+
+	.description,
+	.text-muted.text-xs {
+		display: -webkit-box;
+		overflow: hidden;
+		font-size: 12.5px;
+		line-height: 1.6;
+		color: #8b8b93;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+	}
+
+	.icon {
+		width: 38px !important;
+		height: 38px !important;
+		font-size: 17px !important;
+		border-radius: 12px !important;
+	}
+}
+
+@media (max-width: 767.98px) {
+	.category .subcategory [component="category/subcategory/container"] {
+		grid-template-columns: 1fr;
+	}
+}
+
+// ===========================================================
+//  21. 热点速看弹层
+// ===========================================================
+.campus-hot {
+	position: fixed;
+	inset: 0;
+	z-index: 1095;
+	display: none;
+
+	&.open {
+		display: block;
+	}
+
+	&-mask {
+		position: absolute;
+		inset: 0;
+		background: rgba(17, 24, 39, 0.42);
+		backdrop-filter: blur(3px);
+		-webkit-backdrop-filter: blur(3px);
+	}
+
+	&-card {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		display: flex;
+		flex-direction: column;
+		width: min(560px, calc(100vw - 32px));
+		max-height: min(78vh, 720px);
+		overflow: hidden;
+		background: #fff;
+		border-radius: 20px;
+		box-shadow: 0 24px 60px rgba(17, 24, 39, 0.28);
+		transform: translate(-50%, -50%);
+		animation: campus-fade-up 0.22s var(--campus-ease) both;
+	}
+
+	&-header {
+		display: flex;
+		gap: 12px;
+		align-items: center;
+		justify-content: space-between;
+		padding: 16px 18px;
+		color: #fff;
+		background: linear-gradient(135deg, #ff9a76, #f7608a);
+	}
+
+	&-title {
+		font-size: 16px;
+		font-weight: 600;
+	}
+
+	&-sub {
+		margin-top: 2px;
+		font-size: 12px;
+		opacity: 0.9;
+	}
+
+	&-actions {
+		display: flex;
+		gap: 6px;
+	}
+
+	&-icon-btn {
+		width: 30px;
+		height: 30px;
+		padding: 0;
+		color: #fff;
+		font-size: 13px;
+		cursor: pointer;
+		background: rgba(255, 255, 255, 0.2);
+		border: 0;
+		border-radius: 50%;
+		transition: background-color 0.15s ease;
+
+		&:hover {
+			background: rgba(255, 255, 255, 0.34);
+		}
+	}
+
+	&-tabs {
+		display: flex;
+		gap: 6px;
+		padding: 10px 14px;
+		overflow-x: auto;
+		background: #fdf9fb;
+		border-bottom: 1px solid #f4e8ee;
+	}
+
+	&-tab {
+		padding: 6px 12px;
+		color: #6b7280;
+		font-size: 13px;
+		white-space: nowrap;
+		cursor: pointer;
+		background: #fff;
+		border: 1px solid #f0dfe6;
+		border-radius: 999px;
+		transition: color 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+
+		&:hover {
+			color: #f7608a;
+			border-color: #f7c9d8;
+		}
+
+		&.is-active {
+			color: #fff;
+			background: linear-gradient(135deg, #ff9a76, #f7608a);
+			border-color: transparent;
+		}
+	}
+
+	&-list {
+		flex: 1;
+		padding: 8px 10px;
+		overflow-y: auto;
+	}
+
+	&-item {
+		display: flex;
+		gap: 10px;
+		align-items: flex-start;
+		padding: 9px 10px;
+		color: #374151;
+		font-size: 14px;
+		line-height: 1.6;
+		text-decoration: none;
+		border-radius: 10px;
+		transition: background-color 0.16s ease, color 0.16s ease;
+
+		&:hover {
+			color: #f7608a;
+			background: #fdf2f6;
+		}
+	}
+
+	&-rank {
+		flex-shrink: 0;
+		width: 20px;
+		height: 20px;
+		margin-top: 2px;
+		color: #9aa3af;
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 20px;
+		text-align: center;
+		background: #f4f1f3;
+		border-radius: 6px;
+
+		&.is-top {
+			color: #fff;
+			background: linear-gradient(135deg, #ff9a76, #f7608a);
+		}
+	}
+
+	&-text {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&-loading,
+	&-empty {
+		padding: 24px 10px;
+		color: #9aa3af;
+		font-size: 13px;
+		text-align: center;
+	}
+
+	&-foot {
+		display: flex;
+		gap: 10px;
+		align-items: center;
+		justify-content: space-between;
+		padding: 10px 14px 12px;
+		background: #fff;
+		border-top: 1px solid #f4e8ee;
+	}
+
+	&-ai {
+		padding: 7px 14px;
+		color: #fff;
+		font-size: 13px;
+		font-weight: 600;
+		cursor: pointer;
+		background: linear-gradient(135deg, #ff8fb1, #f7608a);
+		border: 0;
+		border-radius: 999px;
+		box-shadow: 0 8px 18px rgba(247, 96, 138, 0.28);
+		transition: transform 0.16s ease, box-shadow 0.16s ease;
+
+		&:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 12px 24px rgba(247, 96, 138, 0.34);
+		}
+	}
+
+	&-tip {
+		font-size: 11px;
+		color: #b9b9c0;
+	}
+
+	&-summary {
+		margin: 0 12px 10px;
+		padding: 12px;
+		background: #fdf7fa;
+		border: 1px solid #f6e3ea;
+		border-radius: 12px;
+
+		&.hidden {
+			display: none;
+		}
+	}
+
+	&-summary-title {
+		margin-bottom: 6px;
+		color: #b05a78;
+		font-size: 13px;
+		font-weight: 600;
+	}
+
+	&-summary-body {
+		color: #4b5563;
+		font-size: 13px;
+		line-height: 1.75;
+	}
+
+	&-err {
+		color: #d92d20;
+		font-size: 13px;
+	}
+}
+
+@media (max-width: 767.98px) {
+	.campus-hot-card {
+		top: 0;
+		left: 0;
+		width: 100vw;
+		height: 100vh;
+		max-height: none;
+		border-radius: 0;
+		transform: none;
+	}
+
+	.campus-hot-item {
+		padding: 11px 10px;
+		font-size: 15px;
+	}
+}
+
+// ===========================================================
+//  22. 热点速看：PC / 移动端布局重修
+//  （之前卡片用了位移动画，把居中用的 transform 覆盖掉了，
+//    导致卡片被顶到屏幕下方、底部按钮看不见）
+// ===========================================================
+.campus-hot {
+	// 遮罩淡入，不动卡片本身
+	&-mask {
+		opacity: 0;
+		transition: opacity 0.2s var(--campus-ease);
+	}
+
+	&.open &-mask {
+		opacity: 1;
+	}
+
+	&-card {
+		top: 50%;
+		left: 50%;
+		display: flex;
+		flex-direction: column;
+		width: min(600px, calc(100vw - 32px));
+		max-height: min(80vh, 680px);
+		border: 1px solid rgba(255, 255, 255, 0.7);
+		border-radius: 20px;
+		transform: translate(-50%, -50%);
+		// 关键：只做透明度动画，绝不动 transform
+		animation: campus-hot-fade 0.18s ease both;
+	}
+
+	&-header {
+		flex-shrink: 0;
+		padding: 16px 20px;
+	}
+
+	&-title {
+		font-size: 16.5px;
+	}
+
+	&-tabs {
+		flex-shrink: 0;
+		gap: 6px;
+		padding: 10px 14px;
+		scrollbar-width: none;
+
+		&::-webkit-scrollbar {
+			display: none;
+		}
+	}
+
+	&-tab {
+		padding: 6px 11px;
+		font-size: 12.5px;
+	}
+
+	&-list {
+		flex: 1;
+		min-height: 0;
+		padding: 8px 10px;
+		overflow-y: auto;
+
+		&::-webkit-scrollbar {
+			width: 6px;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background: #eadde3;
+			border-radius: 999px;
+		}
+	}
+
+	&-item {
+		gap: 10px;
+		padding: 9px 10px;
+		font-size: 14px;
+
+		+ .campus-hot-item {
+			margin-top: 2px;
+		}
+	}
+
+	&-text {
+		display: -webkit-box;
+		overflow: hidden;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+	}
+
+	&-rank {
+		width: 21px;
+		height: 21px;
+		font-size: 11.5px;
+		line-height: 21px;
+		border-radius: 7px;
+	}
+
+	&-foot {
+		flex-shrink: 0;
+		padding: 10px 14px 12px;
+	}
+
+	&-summary {
+		flex-shrink: 0;
+		max-height: 32vh;
+		margin: 0 12px 8px;
+		overflow-y: auto;
+	}
+}
+
+@keyframes campus-hot-fade {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+// ---------- 手机：整页抽屉，上下安全区都留出来 ----------
+@media (max-width: 767.98px) {
+	.campus-hot-card {
+		top: 0;
+		left: 0;
+		width: 100vw;
+		height: 100vh;
+		height: 100dvh;
+		max-height: none;
+		border: 0;
+		border-radius: 0;
+		transform: none;
+	}
+
+	.campus-hot-header {
+		padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 14px;
+	}
+
+	.campus-hot-tabs {
+		padding: 9px 12px;
+	}
+
+	.campus-hot-list {
+		padding: 6px 8px;
+	}
+
+	.campus-hot-item {
+		padding: 12px 10px;
+		font-size: 15px;
+	}
+
+	.campus-hot-foot {
+		// 手机底部有导航条，留出空间，别被盖住
+		padding: 10px 14px calc(14px + env(safe-area-inset-bottom, 0px) + 56px);
+	}
+
+	.campus-hot-summary {
+		max-height: 30vh;
+	}
+}
+
+// ===========================================================
+//  23. 全局收尾：统一主按钮、焦点、选区、滚动条、悬浮按钮避让
+// ===========================================================
+
+// 回到顶部按钮上移，别和右下角的 AI 气泡叠在一起
+#dsh-top {
+	bottom: 88px;
+}
+
+// 全站主按钮统一成粉色渐变（覆盖各页面还没改到的 .btn-primary）
+.btn-primary,
+.btn-cta {
+	color: #fff !important;
+	background: linear-gradient(135deg, #ff8fb1, #f7608a) !important;
+	border-color: transparent !important;
+	border-radius: 10px !important;
+	box-shadow: 0 8px 18px rgba(247, 96, 138, 0.24);
+	transition: transform 0.18s var(--campus-ease), box-shadow 0.18s var(--campus-ease);
+
+	&:hover {
+		color: #fff !important;
+		transform: translateY(-1px);
+		box-shadow: 0 12px 24px rgba(247, 96, 138, 0.34);
+	}
+
+	&:active {
+		transform: translateY(0) scale(0.99);
+	}
+}
+
+// 文字链接悬停变粉
+a:not(.btn):not(.nav-link):not(.text-reset):hover {
+	color: #f7608a;
+}
+
+// 文字选区颜色
+::selection {
+	background: rgba(247, 168, 196, 0.35);
+}
+
+// 键盘聚焦可见（无障碍，也更好看）
+:focus-visible {
+	outline: 2px solid rgba(247, 96, 138, 0.6);
+	outline-offset: 2px;
+}
+
+// 通用卡片圆角统一
+.card {
+	border: 1px solid rgba(17, 24, 39, 0.06);
+	border-radius: 14px;
+}
+
+// 全局细滚动条
+* {
+	scrollbar-width: thin;
+	scrollbar-color: #ecdde4 transparent;
+}
+
+*::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+	background: #ecdde4;
+	border-radius: 999px;
+
+	&:hover {
+		background: #e2ccd6;
+	}
+}
+
+*::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+// 顶部导航栏和侧栏之间更协调
+.navbar {
+	box-shadow: 0 1px 0 rgba(17, 24, 39, 0.05);
+}

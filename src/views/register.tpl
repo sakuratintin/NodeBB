@@ -40,6 +40,15 @@
 							</div>
 						</div>
 
+						<div class="mb-2 d-flex flex-column gap-2">
+							<label for="email">{{tx("register:email-address")}}</label>
+							<div class="d-flex flex-column">
+								<input class="form-control" type="email" placeholder="{{tx("register:email-address-placeholder")}}" name="email" id="email" autocomplete="email" autocapitalize="off" aria-required="{{config.requireEmailAddress}}" aria-describedby="email-notify"{{{ if config.requireEmailAddress }}} required{{{ end }}}/>
+								<span class="register-feedback text-xs text-danger" id="email-notify" aria-live="polite"></span>
+								<span class="form-text text-xs">{{tx("register:help.email")}}</span>
+							</div>
+						</div>
+
 						{{{ each regFormEntry }}}
 						<div class="mb-2 regFormEntry d-flex flex-column gap-2 {./styleName}">
 							<label for="{./inputId}">{{tx(./label)}}</label>
