@@ -1,53 +1,42 @@
-# 校园论坛专用镜像：在官方 NodeBB 镜像基础上，打包我们自己的插件
-# 构建：docker build -f Dockerfile.campus -t nodebb-campus .
+# 校园论坛专用镜像（自包含：不依赖任何挂载卷权限）
+#
+# 特点：
+#   - 配置由环境变量生成，直接写在镜像内部
+#   - 自动等待数据库、自动建库、自动初始化/升级
+#   - 部署到 Sealos / K8s 时不需要挂载 /opt/config
 
-FROM node:22-bookworm-slim AS build
-
-ENV NODE_ENV=production \
-    DAEMON=false \
-    SILENT=false
-
-WORKDIR /usr/src/app/
-
-COPY . /usr/src/app/
-
-# NodeBB 的依赖清单放在 install/package.json，需要先复制到根目录
-RUN cp /usr/src/app/install/package.json /usr/src/app/package.json \
-    && npm install --omit=dev --no-audit --no-fund \
-    && rm -rf /usr/src/app/.npm
-
-# 把自定义插件放进 node_modules（Git 里是 plugins/ 目录，运行时必须在 node_modules 下）
-RUN mkdir -p /usr/src/app/node_modules \
-    && cp -r /usr/src/app/plugins/nodebb-plugin-campus-ai /usr/src/app/node_modules/ \
-    && rm -rf /usr/src/app/node_modules/nodebb-plugin-campus-ai/node_modules
-
-# 清掉不需要进镜像的东西
-RUN rm -rf /usr/src/app/.git /usr/src/app/.github /usr/src/app/test
-
-FROM node:22-bookworm-slim AS final
+FROM node:22-bookworm-slim
 
 ENV NODE_ENV=production \
     DAEMON=false \
-    SILENT=false
+    SILENT=false \
+    npm_config_registry=https://registry.npmmirror.com
 
-WORKDIR /usr/src/app/
+WORKDIR /usr/src/app
 
+# tini 负责转发信号，让容器能正常停止
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install tini \
-    && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /usr/src/app/logs /usr/src/app/build /usr/src/app/public/uploads /opt/config
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /usr/src/app/ /usr/src/app/
+# 拷贝源码
+COPY . /usr/src/app/
 
-RUN chmod +x /usr/src/app/install/docker/entrypoint.sh
+# 准备依赖清单 + 安装依赖 + 注入自定义插件
+RUN cp /usr/src/app/install/package.json /usr/src/app/package.json \
+    && npm install --no-audit --no-fund \
+    && mkdir -p /usr/src/app/node_modules \
+    && cp -r /usr/src/app/plugins/nodebb-plugin-campus-ai /usr/src/app/node_modules/ \
+    && rm -rf /usr/src/app/node_modules/nodebb-plugin-campus-ai/node_modules \
+    && rm -rf /usr/src/app/.git /usr/src/app/.github /usr/src/app/test /usr/src/app/.npm
 
-# 故意以 root 运行：云平台（Sealos / K8s）挂载的卷默认属于 root，
-# 用普通用户会因为写不进挂载目录而启动失败。容器内 root 不影响宿主机安全。
-# USER 不设置 → 默认 root
+# 启动脚本
+COPY docker-campus/start.sh /usr/local/bin/start-campus.sh
+RUN chmod +x /usr/local/bin/start-campus.sh
 
 EXPOSE 4567
 
-# 建议把这三个目录挂载为持久化存储
-VOLUME ["/usr/src/app/build", "/usr/src/app/public/uploads", "/opt/config/"]
+# 只有上传目录建议挂载持久化（可选，不挂也能跑，只是重部署后图片会丢）
+VOLUME ["/usr/src/app/public/uploads"]
 
-ENTRYPOINT ["tini", "--", "/usr/src/app/install/docker/entrypoint.sh"]
+ENTRYPOINT ["tini", "--", "/usr/local/bin/start-campus.sh"]
