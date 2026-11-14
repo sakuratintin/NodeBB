@@ -121,7 +121,22 @@ if [ -f "$APP_DIR/build/cache-buster" ]; then
     echo "前端资源已存在，跳过编译"
 else
     echo "构建前端资源（首次较慢，请耐心等待）..."
-    ./nodebb build || echo "构建出现警告，继续启动"
+    echo "--- 磁盘情况 ---"
+    df -h "$APP_DIR/build" 2>/dev/null || true
+    echo "----------------"
+    if ! ./nodebb build; then
+        echo "!! 首次构建失败，10 秒后重试一次..."
+        sleep 10
+        if ! ./nodebb build; then
+            echo "!! 构建仍然失败：请看上面的报错（常见是磁盘空间不足）"
+        fi
+    fi
+fi
+
+# 7.5) 校验编译产物，缺了就直接报错，避免页面 500 却不知道原因
+if [ ! -d "$APP_DIR/build/public/templates" ]; then
+    echo "!! 编译产物缺失：$APP_DIR/build/public/templates 不存在"
+    echo "!! 请确认已给 /usr/src/app/build 挂载至少 5Gi 的持久卷"
 fi
 
 # 8) 启动
