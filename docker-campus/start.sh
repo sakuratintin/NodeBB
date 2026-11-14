@@ -128,6 +128,12 @@ case "$DB_STATE" in
 esac
 
 # 7) 构建前端资源（没有编译产物才编译）
+#    CAMPUS_FORCE_BUILD=true 时强制清空重编译（换了数据库 / 主题后需要）
+if [ "${CAMPUS_FORCE_BUILD:-false}" = "true" ]; then
+    echo "检测到 CAMPUS_FORCE_BUILD=true，清空旧编译产物..."
+    rm -rf "$APP_DIR/build"/* 2>/dev/null || true
+fi
+
 if [ -f "$APP_DIR/build/cache-buster" ]; then
     echo "前端资源已存在，跳过编译"
 else
