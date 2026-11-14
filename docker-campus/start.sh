@@ -16,6 +16,19 @@ if [ ! -f "$APP_DIR/package.json" ]; then
     cp "$APP_DIR/install/package.json" "$APP_DIR/package.json"
 fi
 
+# 1.5) 关键：把自定义插件登记成「本地目录依赖」
+#     否则 NodeBB 升级时会把它当成网上的包去 npm 下载，必然 404
+echo "[0/5] 登记本地插件..."
+node -e '
+const fs = require("fs");
+const file = "/usr/src/app/package.json";
+const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
+pkg.dependencies = pkg.dependencies || {};
+pkg.dependencies["nodebb-plugin-campus-ai"] = "file:plugins/nodebb-plugin-campus-ai";
+fs.writeFileSync(file, JSON.stringify(pkg, null, 4));
+console.log("        nodebb-plugin-campus-ai -> file:plugins/nodebb-plugin-campus-ai");
+'
+
 # 2) 安装 / 校准依赖（镜像里已经装好，这里只在缺包时补）
 echo "[1/5] 检查依赖..."
 if [ ! -d "$APP_DIR/node_modules/nconf" ]; then
@@ -91,7 +104,10 @@ c.connect().then(async()=>{
 }).catch(()=>process.exit(1));
 " 2>/dev/null; then
     echo "[5/5] 检测到已有数据，执行升级..."
-    ./nodebb upgrade || echo "        升级跳过"
+    if ! ./nodebb upgrade; then
+        echo "        升级失败，尝试重新初始化..."
+        ./nodebb setup --config="$APP_DIR/config.json" || echo "        初始化可能已完成"
+    fi
 else
     echo "[5/5] 首次启动，初始化论坛..."
     ./nodebb setup --config="$APP_DIR/config.json" || echo "        初始化可能已完成"
