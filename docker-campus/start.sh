@@ -45,6 +45,7 @@ cat > "$APP_DIR/config.json" <<EOF
     "secret": "${NODEBB_SECRET:-campus-forum-default-secret}",
     "database": "postgres",
     "port": 4567,
+    "trust_proxy": true,
     "postgres": {
         "host": "${NODEBB_DB_HOST:-localhost}",
         "port": ${NODEBB_DB_PORT:-5432},
