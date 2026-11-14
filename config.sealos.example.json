@@ -1,0 +1,14 @@
+{
+    "url": "http://localhost:4567",
+    "secret": "REPLACE_WITH_RANDOM_SECRET",
+    "database": "postgres",
+    "port": 4567,
+    "postgres": {
+        "host": "campus-db-postgresql.ns-a2u0imcj.svc",
+        "port": 5432,
+        "username": "postgres",
+        "password": "PASTE_YOUR_PASSWORD_HERE",
+        "database": "nodebb",
+        "ssl": false
+    }
+}

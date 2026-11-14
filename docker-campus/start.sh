@@ -8,14 +8,21 @@ cd "$APP_DIR"
 
 echo "========== 校园论坛启动 =========="
 
+# 国内访问 npm 官方仓库很慢，运行时统一走镜像站
+export npm_config_registry="${npm_config_registry:-https://registry.npmmirror.com}"
+
 # 1) 准备 package.json（NodeBB 的依赖清单放在 install/ 下）
 if [ ! -f "$APP_DIR/package.json" ]; then
     cp "$APP_DIR/install/package.json" "$APP_DIR/package.json"
 fi
 
-# 2) 安装 / 校准依赖
+# 2) 安装 / 校准依赖（镜像里已经装好，这里只在缺包时补）
 echo "[1/5] 检查依赖..."
-npm install --no-audit --no-fund
+if [ ! -d "$APP_DIR/node_modules/nconf" ]; then
+    npm install --omit=dev --no-audit --no-fund
+else
+    echo "        依赖已就绪，跳过"
+fi
 
 # 3) 用环境变量生成 config.json（写在镜像内部，不碰挂载卷）
 echo "[2/5] 生成配置..."

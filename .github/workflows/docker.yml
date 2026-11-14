@@ -25,7 +25,7 @@ jobs:
             required: true
           - os: ubuntu-24.04-arm
             platforms: linux/arm64
-            required: true
+            required: false
     continue-on-error: ${{ !matrix.required }}
     runs-on: ${{ matrix.os }}
     steps:

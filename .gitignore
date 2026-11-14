@@ -81,3 +81,6 @@ test.out
 
 # 本地数据库备份（含密钥，绝不提交）
 backup/
+
+# 部署配置（含数据库密码，绝不提交）
+config.sealos.json
