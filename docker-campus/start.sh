@@ -125,5 +125,7 @@ else
 fi
 
 # 8) 启动
+# 注意：不能用 "nodebb start"，它会把进程 fork 到后台然后自己退出，
+# 容器里主进程一退出就会被杀掉。必须前台常驻。
 echo "========== 启动 NodeBB =========="
-exec ./nodebb start
+exec node loader.js --daemon=false --no-silent
