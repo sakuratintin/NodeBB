@@ -113,9 +113,13 @@ else
     ./nodebb setup --config="$APP_DIR/config.json" || echo "        初始化可能已完成"
 fi
 
-# 7) 构建前端资源
-echo "构建前端资源..."
-./nodebb build || echo "构建出现警告，继续启动"
+# 7) 构建前端资源（升级/初始化时已经编译过就跳过，省时间也省磁盘）
+if [ -f "$APP_DIR/build/cache-buster" ]; then
+    echo "前端资源已存在，跳过编译"
+else
+    echo "构建前端资源..."
+    ./nodebb build || echo "构建出现警告，继续启动"
+fi
 
 # 8) 启动
 echo "========== 启动 NodeBB =========="
