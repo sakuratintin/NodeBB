@@ -93,7 +93,8 @@ const name=process.env.NODEBB_DB_NAME||'nodebb';
 })().catch(e=>{console.error('        建库失败:',e.message);process.exit(0);});
 "
 
-# 6) 初始化（首次）或升级（后续）
+# 6) 初始化（首次）或直接启动（已有数据）
+DB_HAS_TABLES=0
 if node -e "
 const {Client}=require('pg');
 const c=new Client({host:process.env.NODEBB_DB_HOST,port:+(process.env.NODEBB_DB_PORT||5432),user:process.env.NODEBB_DB_USER,password:process.env.NODEBB_DB_PASSWORD,database:process.env.NODEBB_DB_NAME||'nodebb',connectionTimeoutMillis:5000});
@@ -103,21 +104,23 @@ c.connect().then(async()=>{
   process.exit(r.rows.length?0:1);
 }).catch(()=>process.exit(1));
 " 2>/dev/null; then
-    echo "[5/5] 检测到已有数据，执行升级..."
-    if ! ./nodebb upgrade; then
-        echo "        升级失败，尝试重新初始化..."
-        ./nodebb setup --config="$APP_DIR/config.json" || echo "        初始化可能已完成"
-    fi
+    DB_HAS_TABLES=1
+fi
+
+if [ "$DB_HAS_TABLES" = "1" ]; then
+    # 已有数据：不再跑 upgrade（它内部会 npm install + 全量重建，
+    # 在 100Mi 的临时磁盘里必然爆掉）。表结构已经是最新的，直接启动即可。
+    echo "[5/5] 检测到已有数据，跳过升级，直接启动"
 else
     echo "[5/5] 首次启动，初始化论坛..."
     ./nodebb setup --config="$APP_DIR/config.json" || echo "        初始化可能已完成"
 fi
 
-# 7) 构建前端资源（升级/初始化时已经编译过就跳过，省时间也省磁盘）
+# 7) 构建前端资源（没有编译产物才编译）
 if [ -f "$APP_DIR/build/cache-buster" ]; then
     echo "前端资源已存在，跳过编译"
 else
-    echo "构建前端资源..."
+    echo "构建前端资源（首次较慢，请耐心等待）..."
     ./nodebb build || echo "构建出现警告，继续启动"
 fi
 
