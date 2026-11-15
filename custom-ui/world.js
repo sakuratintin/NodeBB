@@ -78,8 +78,19 @@
 				var catChip = cat.name
 					? '<span class="campus-world-cat" style="--c:' + esc(cat.bgColor || '#f7608a') + '">' + esc(cat.name) + '</span>'
 					: '';
+				// 优先用主题地址（/topic/19/标题），比 /post/37 更稳，站内跳转不会 404
+				var href = topic.slug
+					? '/topic/' + topic.slug
+					: (function () {
+						try {
+							var u = new URL(p.url, location.origin);
+							return u.pathname + u.search;
+						} catch (e) {
+							return p.url || '/';
+						}
+					})();
 				return (
-					'<article class="campus-world-post" data-url="' + esc(p.url || '#') + '" role="link" tabindex="0">' +
+					'<article class="campus-world-post" data-url="' + esc(href) + '" role="link" tabindex="0">' +
 					'  <div class="campus-world-post-head">' + avatar +
 					'    <a class="campus-world-user" href="/user/' + esc(user.userslug || '') + '">' + esc(user.username || '匿名') + '</a>' +
 					'    <time>' + relativeTime(p.timestamp || Date.now()) + '</time>' + catChip +
