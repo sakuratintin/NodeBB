@@ -646,6 +646,48 @@
 				try { enhanceComposer(); } catch (e) {}
 			}, 100);
 		});
+
+		// ---------- 发帖 / 回复的最少字数提示（PC 与手机都生效） ----------
+		var MIN_TITLE = 4;
+		var MIN_POST = 10;
+
+		document.addEventListener('click', function (e) {
+			var btn = e.target && e.target.closest
+				? e.target.closest('[data-action="post"], .composer-submit, [component="composer/submit"]')
+				: null;
+			if (!btn) return;
+
+			var composer = document.querySelector('[component="composer"]');
+			if (!composer) return;
+
+			var titleEl = composer.querySelector('input.title, .title-container input');
+			var textarea = composer.querySelector('textarea.write');
+			if (!textarea) return;
+
+			var title = (titleEl && titleEl.value ? titleEl.value : '').trim();
+			var body = (textarea.value || '').trim();
+
+			function block(msg, target) {
+				e.preventDefault();
+				e.stopPropagation();
+				if (target) target.focus();
+				// 用 NodeBB 自带的 alerts 更好看，没有就退回 alert
+				if (window.app && window.app.alert) {
+					window.app.alert.error(msg);
+				} else {
+					alert(msg);
+				}
+			}
+
+			if (titleEl && title.length < MIN_TITLE) {
+				block('标题至少 ' + MIN_TITLE + ' 个字（现在 ' + title.length + ' 个）', titleEl);
+				return;
+			}
+
+			if (body.length < MIN_POST) {
+				block('正文至少 ' + MIN_POST + ' 个字（现在 ' + body.length + ' 个）', textarea);
+			}
+		}, true);
 	}
 
 	if (document.readyState === 'loading') {
