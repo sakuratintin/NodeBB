@@ -2788,7 +2788,56 @@ body.campus-home-world #content > *:not(#campus-world-inline) {
 }
 
 .campus-world-post-foot {
+	display: flex;
+	gap: 12px;
+	align-items: center;
 	margin-top: 10px;
+}
+
+// 点赞按钮
+.campus-like {
+	display: inline-flex;
+	gap: 5px;
+	align-items: center;
+	padding: 5px 12px;
+	color: #8b8b93;
+	font-size: 12.5px;
+	font-weight: 500;
+	cursor: pointer;
+	background: #fdfbfc;
+	border: 1px solid #f4e8ee;
+	border-radius: 999px;
+	transition: color 0.16s ease, background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+
+	i {
+		font-size: 14px;
+		transition: transform 0.18s ease;
+	}
+
+	&:hover {
+		color: #f7608a;
+		background: #fdf2f6;
+		border-color: #f7d3e0;
+	}
+
+	&:active i {
+		transform: scale(1.25);
+	}
+
+	&.is-liked {
+		color: #f7608a;
+		background: #fdf2f6;
+		border-color: #f7a8c4;
+
+		i {
+			color: #f7608a;
+		}
+	}
+
+	&:disabled {
+		opacity: 0.65;
+		cursor: default;
+	}
 }
 
 .campus-world-link {

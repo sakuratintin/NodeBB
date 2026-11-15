@@ -62,6 +62,119 @@
 		);
 	}
 
+	// ---------------- 点赞 ----------------
+	function likedSet() {
+		try {
+			return JSON.parse(localStorage.getItem('campusLiked') || '[]');
+		} catch (e) {
+			return [];
+		}
+	}
+
+	function saveLiked(arr) {
+		try {
+			localStorage.setItem('campusLiked', JSON.stringify(arr.slice(-500)));
+		} catch (e) {}
+	}
+
+	function likeHtml(p) {
+		var liked = likedSet().indexOf(p.pid) !== -1;
+		var count = (p.upvotes || 0) - (p.downvotes || 0);
+		if (count < 0) count = 0;
+		return (
+			'<button type="button" class="campus-like' + (liked ? ' is-liked' : '') + '"' +
+			' data-pid="' + p.pid + '" data-count="' + count + '" data-liked="' + (liked ? '1' : '0') + '"' +
+			' title="点赞">' +
+			'<i class="fa ' + (liked ? 'fa-heart' : 'fa-heart-o') + '"></i>' +
+			'<span class="campus-like-count">' + (count > 0 ? count : '赞') + '</span>' +
+			'</button>'
+		);
+	}
+
+	function bindLike(list) {
+		Array.prototype.forEach.call(list.querySelectorAll('.campus-like'), function (btn) {
+			if (btn.dataset.bound) return;
+			btn.dataset.bound = '1';
+
+			btn.addEventListener('click', function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+
+				var uid = window.app && window.app.user && window.app.user.uid;
+				if (!uid) {
+					toast('请先登录再点赞');
+					return;
+				}
+				if (btn.disabled) return;
+
+				var pid = parseInt(btn.getAttribute('data-pid'), 10);
+				var liked = btn.getAttribute('data-liked') === '1';
+				var count = parseInt(btn.getAttribute('data-count'), 10) || 0;
+
+				btn.disabled = true;
+
+				var req = liked
+					? fetch('/api/v3/posts/' + pid + '/vote', {
+						method: 'DELETE',
+						credentials: 'same-origin',
+						headers: { 'x-csrf-token': (window.config && window.config.csrf_token) || '' },
+					})
+					: fetch('/api/v3/posts/' + pid + '/vote', {
+						method: 'PUT',
+						credentials: 'same-origin',
+						headers: {
+							'Content-Type': 'application/json',
+							'x-csrf-token': (window.config && window.config.csrf_token) || '',
+						},
+						body: JSON.stringify({ delta: 1 }),
+					});
+
+				req
+					.then(function (r) {
+						return r.json().catch(function () { return {}; }).then(function (d) {
+							if (!r.ok) {
+								var msg = (d && d.status && d.status.message) || (d && d.error) || '操作失败';
+								throw new Error(msg);
+							}
+							return d;
+						});
+					})
+					.then(function () {
+						var next = liked ? count - 1 : count + 1;
+						if (next < 0) next = 0;
+						btn.setAttribute('data-count', next);
+						btn.setAttribute('data-liked', liked ? '0' : '1');
+						btn.classList.toggle('is-liked', !liked);
+						btn.querySelector('i').className = 'fa ' + (liked ? 'fa-heart-o' : 'fa-heart');
+						btn.querySelector('.campus-like-count').textContent = next > 0 ? next : '赞';
+
+						var arr = likedSet();
+						if (liked) arr = arr.filter(function (x) { return x !== pid; });
+						else arr.push(pid);
+						saveLiked(arr);
+					})
+					.catch(function (err) {
+						var m = (err.message || '').toLowerCase();
+						if (m.indexOf('already') !== -1) {
+							// 之前已经点过赞
+							btn.setAttribute('data-liked', '1');
+							btn.classList.add('is-liked');
+							btn.querySelector('i').className = 'fa fa-heart';
+							var arr = likedSet();
+							if (arr.indexOf(pid) === -1) arr.push(pid);
+							saveLiked(arr);
+							toast('你已经点过赞啦 🌸');
+						} else {
+							toast(err.message || '点赞失败');
+						}
+					})
+					.then(function () {
+						btn.disabled = false;
+					});
+			});
+		});
+	}
+
 	function renderPosts(list, posts) {
 		if (!posts || !posts.length) {
 			list.innerHTML = '<div class="campus-world-empty">还没有帖子，点右下角的笔写第一条吧 🌸</div>';
@@ -96,11 +209,12 @@
 					'    <time>' + relativeTime(p.timestamp || Date.now()) + '</time>' + catChip +
 					'  </div>' +
 					'  <div class="campus-world-body">' + (p.content || '') + '</div>' +
+					'  <div class="campus-world-post-foot">' +
+					likeHtml(p) +
 					(topic.title && topic.title !== (p.content || '').replace(/<[^>]+>/g, '').trim()
-						? '  <div class="campus-world-post-foot">' +
-							'    <span class="campus-world-link">' + esc(topic.title) + ' <i class="fa fa-angle-right"></i></span>' +
-							'  </div>'
+						? '<span class="campus-world-link">' + esc(topic.title) + ' <i class="fa fa-angle-right"></i></span>'
 						: '') +
+					'  </div>' +
 					'</article>'
 				);
 			})
@@ -141,6 +255,8 @@
 				}
 			});
 		});
+
+		bindLike(list);
 	}
 
 	function fetchPosts(term) {
