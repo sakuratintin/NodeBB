@@ -2578,3 +2578,271 @@ label[for="bootswatchSkin"],
 		}
 	}
 }
+
+// ===========================================================
+//  29. 「世界」帖子流面板
+// ===========================================================
+.campus-world {
+	position: fixed;
+	inset: 0;
+	z-index: 1075;
+
+	&.hidden {
+		display: none !important;
+	}
+
+	.campus-world-backdrop {
+		position: absolute;
+		inset: 0;
+		background: rgba(17, 24, 39, 0.42);
+		backdrop-filter: blur(3px);
+	}
+
+	.campus-world-card {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		display: flex;
+		flex-direction: column;
+		width: min(760px, calc(100vw - 32px));
+		max-height: min(78vh, 900px);
+		background: #fff;
+		border-radius: 20px;
+		box-shadow: 0 30px 70px rgba(17, 24, 39, 0.28);
+		transform: translate(-50%, -50%);
+		overflow: hidden;
+	}
+
+	.campus-world-head {
+		display: flex;
+		gap: 12px;
+		align-items: center;
+		justify-content: space-between;
+		padding: 14px 18px;
+		background: linear-gradient(135deg, #fff5f8, #fdeaf1);
+		border-bottom: 1px solid #f7d3e0;
+	}
+
+	.campus-world-title {
+		display: flex;
+		gap: 8px;
+		align-items: baseline;
+		color: #3d3d46;
+
+		i {
+			color: #f7608a;
+		}
+
+		span {
+			font-size: 17px;
+			font-weight: 700;
+			letter-spacing: 1px;
+		}
+
+		small {
+			color: #9aa3af;
+			font-size: 12px;
+		}
+	}
+
+	.campus-world-actions {
+		display: flex;
+		gap: 6px;
+
+		button {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 32px;
+			height: 32px;
+			color: #6b7280;
+			font-size: 14px;
+			cursor: pointer;
+			background: #fff;
+			border: 1px solid #f2e0e8;
+			border-radius: 10px;
+			transition: color 0.16s ease, background-color 0.16s ease;
+
+			&:hover {
+				color: #f7608a;
+				background: #fdf2f6;
+			}
+		}
+	}
+
+	.campus-world-list {
+		flex: 1;
+		padding: 14px 16px;
+		overflow-y: auto;
+	}
+
+	.campus-world-foot {
+		padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+		color: #9aa3af;
+		font-size: 11.5px;
+		text-align: center;
+		border-top: 1px solid #f4e8ee;
+	}
+
+	.campus-world-loading,
+	.campus-world-empty {
+		padding: 40px 0;
+		color: #9aa3af;
+		font-size: 13px;
+		text-align: center;
+	}
+
+	// ---------- 单条帖子 ----------
+	.campus-world-post {
+		padding: 14px;
+		margin-bottom: 12px;
+		background: #fdfbfc;
+		border: 1px solid #f4e8ee;
+		border-radius: 14px;
+		transition: box-shadow 0.18s ease, transform 0.18s ease;
+
+		&:hover {
+			box-shadow: 0 8px 22px rgba(247, 96, 138, 0.1);
+			transform: translateY(-1px);
+		}
+	}
+
+	.campus-world-post-head {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+		margin-bottom: 8px;
+
+		time {
+			color: #9aa3af;
+			font-size: 11.5px;
+		}
+	}
+
+	.campus-world-avatar {
+		width: 26px;
+		height: 26px;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+
+	.campus-world-avatar-text {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		color: #fff;
+		font-size: 12px;
+		font-weight: 600;
+		background: linear-gradient(135deg, #ff9ab8, #f7608a);
+	}
+
+	.campus-world-user {
+		color: #3d3d46;
+		font-size: 13.5px;
+		font-weight: 600;
+
+		&:hover {
+			color: #f7608a;
+		}
+	}
+
+	.campus-world-cat {
+		margin-left: auto;
+		padding: 2px 8px;
+		color: #fff;
+		font-size: 11px;
+		background: var(--c, #f7608a);
+		border-radius: 999px;
+		opacity: 0.9;
+	}
+
+	.campus-world-body {
+		color: #3f3f46;
+		font-size: 14px;
+		line-height: 1.75;
+		word-break: break-word;
+
+		p {
+			margin-bottom: 6px;
+		}
+
+		img,
+		video {
+			max-width: 100%;
+			height: auto;
+			border-radius: 10px;
+		}
+
+		a {
+			color: #f7608a;
+		}
+
+		blockquote {
+			padding: 6px 10px;
+			margin: 6px 0;
+			color: #6b7280;
+			background: #fdf2f6;
+			border-left: 3px solid #f7a8c4;
+			border-radius: 0 8px 8px 0;
+		}
+
+		code {
+			padding: 1px 5px;
+			color: #b05a78;
+			background: #fdf2f6;
+			border-radius: 5px;
+		}
+	}
+
+	.campus-world-post-foot {
+		margin-top: 8px;
+	}
+
+	.campus-world-link {
+		display: inline-flex;
+		gap: 4px;
+		align-items: center;
+		color: #f7608a;
+		font-size: 12.5px;
+		font-weight: 500;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+}
+
+// 手机：世界面板占满屏幕
+@media (max-width: 767.98px) {
+	.campus-world .campus-world-card {
+		top: 0;
+		left: 0;
+		width: 100vw;
+		height: 100vh;
+		max-height: none;
+		border-radius: 0;
+		transform: none;
+	}
+
+	.campus-world .campus-world-head {
+		padding-top: calc(14px + env(safe-area-inset-top, 0px));
+	}
+}
+
+// 手机底部导航里新增的两个图标
+.bottombar .bottombar-nav .campus-bar-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4px 6px;
+	color: #4b5563;
+	cursor: pointer;
+	border-radius: 10px;
+	transition: color 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
+
+	&:active {
+		color: #f7608a;
+		background: #fdf2f6;
+		transform: scale(0.92);
+	}
+}
