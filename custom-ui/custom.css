@@ -2846,3 +2846,25 @@ label[for="bootswatchSkin"],
 		transform: scale(0.92);
 	}
 }
+
+// ===========================================================
+//  30. 发帖只留「标题 + 正文」：隐藏标签输入
+// ===========================================================
+.composer .tag-row,
+.composer .tags-container,
+.composer div[component="composer/tag/dropdown"],
+.composer input.tags,
+.composer #tags {
+	display: none !important;
+}
+
+// 标题占位符改成更直白的「标题」
+.composer .title-container input.title::placeholder,
+.composer input[component="composer/title"]::placeholder {
+	color: #b6b6bf;
+}
+
+// 隐藏标签后，正文下方留一点呼吸空间
+.composer .composer-container {
+	padding-bottom: 12px;
+}
