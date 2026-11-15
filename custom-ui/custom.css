@@ -2582,29 +2582,16 @@ label[for="bootswatchSkin"],
 // ===========================================================
 //  29. 「世界」= 主页内联帖子流 + 可拖动快发浮窗
 // ===========================================================
-// 主页：世界帖子流排在版本列表上方，下面的「版块」照常显示
+// 主页只显示世界帖子流；版块列表在「版块」那一栏里，不混进来
+body.campus-home-world #content > *:not(#campus-world-inline) {
+	display: none !important;
+}
+
 .campus-world-inline {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
 	width: 100%;
-	margin-bottom: 8px;
-}
-
-// 世界和版块列表之间加一条分隔，层次更清楚
-body.campus-home-world #content > .campus-world-inline + * {
-	position: relative;
-	padding-top: 14px;
-
-	&::before {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 1px;
-		content: '';
-		background: linear-gradient(90deg, transparent, #f4e8ee 20%, #f4e8ee 80%, transparent);
-	}
 }
 
 .campus-world-inline-head {
