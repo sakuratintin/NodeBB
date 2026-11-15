@@ -78,20 +78,39 @@
 					? '<span class="campus-world-cat" style="--c:' + esc(cat.bgColor || '#f7608a') + '">' + esc(cat.name) + '</span>'
 					: '';
 				return (
-					'<article class="campus-world-post">' +
+					'<article class="campus-world-post" data-url="' + esc(p.url || '#') + '" role="link" tabindex="0">' +
 					'  <div class="campus-world-post-head">' + avatar +
 					'    <a class="campus-world-user" href="/user/' + esc(user.userslug || '') + '">' + esc(user.username || '匿名') + '</a>' +
 					'    <time>' + relativeTime(p.timestamp || Date.now()) + '</time>' + catChip +
 					'  </div>' +
 					'  <div class="campus-world-body">' + (p.content || '') + '</div>' +
-					'  <div class="campus-world-post-foot">' +
-					'    <a class="campus-world-link" href="' + esc(p.url || '#') + '">' +
-					(topic.title ? esc(topic.title) : '查看帖子') + ' <i class="fa fa-angle-right"></i></a>' +
-					'  </div>' +
+					(topic.title && topic.title !== (p.content || '').replace(/<[^>]+>/g, '').trim()
+						? '  <div class="campus-world-post-foot">' +
+							'    <span class="campus-world-link">' + esc(topic.title) + ' <i class="fa fa-angle-right"></i></span>' +
+							'  </div>'
+						: '') +
 					'</article>'
 				);
 			})
 			.join('');
+
+		// 点整张卡片进帖子；卡片内的链接/图片仍按原样处理
+		Array.prototype.forEach.call(list.querySelectorAll('.campus-world-post'), function (card) {
+			var url = card.getAttribute('data-url');
+			if (!url) return;
+			card.addEventListener('click', function (e) {
+				if (e.target.closest('a, button, img, video')) return;
+				if (window.ajaxify && window.ajaxify.go) window.ajaxify.go(url);
+				else location.href = url;
+			});
+			card.addEventListener('keydown', function (e) {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					if (window.ajaxify && window.ajaxify.go) window.ajaxify.go(url);
+					else location.href = url;
+				}
+			});
+		});
 	}
 
 	function fetchPosts(term) {
