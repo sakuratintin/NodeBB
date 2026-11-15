@@ -648,8 +648,8 @@
 		});
 
 		// ---------- 发帖 / 回复的最少字数提示（PC 与手机都生效） ----------
-		var MIN_TITLE = 4;
-		var MIN_POST = 10;
+		var MIN_TITLE = 1;
+		var MIN_POST = 1;
 
 		document.addEventListener('click', function (e) {
 			var btn = e.target && e.target.closest
