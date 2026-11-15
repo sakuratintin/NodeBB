@@ -2009,3 +2009,210 @@ a:not(.btn):not(.nav-link):not(.text-reset):hover {
 .navbar {
 	box-shadow: 0 1px 0 rgba(17, 24, 39, 0.05);
 }
+
+// ===========================================================
+//  24. 悬浮按钮避让：不遮挡聊天发送键 / 底部导航
+// ===========================================================
+
+// 聊天页、发帖页：直接隐藏 AI 气泡（避免挡住发送按钮）
+.page-chats .campus-ai-bubble,
+.page-chat .campus-ai-bubble,
+.page-compose .campus-ai-bubble,
+.page-chats .campus-ai-panel,
+.page-chat .campus-ai-panel,
+.page-compose .campus-ai-panel {
+	display: none !important;
+}
+
+@media (max-width: 767.98px) {
+	// 手机上把气泡抬高到「底部导航条」上方，避免和输入框、发送键撞车
+	.campus-ai-bubble {
+		right: 14px;
+		bottom: 84px;
+		width: 48px;
+		height: 48px;
+		font-size: 18px;
+	}
+
+	// 面板跟着抬高，展开时不会盖住输入区
+	.campus-ai-panel {
+		bottom: 140px;
+		height: 62vh;
+	}
+
+	// 回到顶部也往上挪，别和 AI 气泡叠在一起
+	#dsh-top {
+		right: 14px;
+		bottom: 140px;
+		width: 40px;
+		height: 40px;
+		z-index: 1039;
+	}
+
+	// 聊天页里底部的发送栏留出安全区
+	.page-chats .chat-input,
+	.page-chat .chat-input {
+		padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+	}
+}
+
+// ===========================================================
+//  25. 移动端发帖界面重做
+// ===========================================================
+@media (max-width: 991.98px) {
+	// ---------- 顶部操作栏：蓝色 → 粉色渐变 ----------
+	.composer .mobile-navbar {
+		display: flex !important;
+		gap: 8px !important;
+		align-items: center;
+		min-height: 58px;
+		padding: calc(6px + env(safe-area-inset-top, 0px)) 10px 6px !important;
+		background: linear-gradient(135deg, #ff9ab8, #f7608a) !important;
+		border: 0 !important;
+		box-shadow: 0 6px 18px rgba(247, 96, 138, 0.28);
+	}
+
+	// 左边关闭 / 最小化：半透明圆角方块
+	.composer .mobile-navbar .btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		padding: 0 !important;
+		color: #fff !important;
+		font-size: 16px !important;
+		background: rgba(255, 255, 255, 0.22) !important;
+		border: 0 !important;
+		border-radius: 12px !important;
+		box-shadow: none !important;
+		transition: transform 0.15s ease, background-color 0.15s ease;
+
+		&:active {
+			background: rgba(255, 255, 255, 0.34) !important;
+			transform: scale(0.94);
+		}
+	}
+
+	// 分类选择器 / 标题文字：白色
+	.composer .mobile-navbar .title,
+	.composer .mobile-navbar .dropdown-toggle,
+	.composer .mobile-navbar .btn-link {
+		color: #fff !important;
+		font-size: 14px !important;
+		text-decoration: none;
+	}
+
+	// 右边提交按钮：白底粉字，拇指好点
+	.composer .mobile-navbar .composer-submit {
+		width: auto !important;
+		min-width: 84px;
+		padding: 0 16px !important;
+		color: #f7608a !important;
+		font-size: 14px !important;
+		font-weight: 700;
+		background: #fff !important;
+		border-radius: 12px !important;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+
+		i {
+			display: none;
+		}
+
+		&::after {
+			content: '发布';
+			letter-spacing: 1px;
+		}
+	}
+
+	// ---------- 表单本体 ----------
+	.composer .composer-container {
+		padding: 10px 12px 0;
+		background: #fdf9fb;
+	}
+
+	// 标题输入：更醒目
+	.composer .title-container {
+		gap: 8px;
+	}
+
+	.composer .title-container .title,
+	.composer .title-container input.title {
+		padding: 13px 14px;
+		font-size: 16px;
+		font-weight: 600;
+		background: #fff;
+		border: 1px solid #f2e0e8;
+		border-radius: 12px;
+	}
+
+	// 工具栏：可横向滑动，图标收紧
+	.composer .formatting-bar {
+		padding: 6px 8px;
+		overflow-x: auto;
+		background: #fff;
+		border: 1px solid #f2e0e8;
+		border-radius: 12px;
+		scrollbar-width: none;
+
+		&::-webkit-scrollbar {
+			display: none;
+		}
+	}
+
+	.composer .formatting-group {
+		flex-wrap: nowrap;
+
+		.btn {
+			padding: 6px 9px;
+			font-size: 15px;
+		}
+	}
+
+	// @EVA 按钮在手机上小一点，不抢位置
+	.campus-composer-eva {
+		padding: 5px 10px;
+		font-size: 12px;
+		white-space: nowrap;
+
+		span {
+			display: inline;
+		}
+	}
+
+	// 正文编辑区：够大但不顶到屏幕底
+	.composer .write-preview-container {
+		gap: 0;
+	}
+
+	.composer .write-container textarea.write {
+		min-height: 46vh;
+		padding: 14px;
+		font-size: 16px; // 防止 iOS 聚焦自动放大
+		line-height: 1.75;
+		background: #fff;
+		border: 1px solid #f2e0e8;
+		border-radius: 12px;
+	}
+
+	// 标签输入
+	.composer-tags-container,
+	.composer [component="composer/tag/dropdown"] {
+		margin-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+	}
+
+	.composer .tag-row input,
+	.composer input[name="tags"] {
+		padding: 10px 12px;
+		font-size: 15px;
+		background: #fff;
+		border: 1px solid #f2e0e8;
+		border-radius: 12px;
+	}
+
+	// 发帖页里隐藏 AI 气泡（避免挡住内容）
+	.page-compose .campus-ai-bubble,
+	.composer .campus-ai-bubble {
+		display: none !important;
+	}
+}
