@@ -232,7 +232,8 @@
 				var b = document.createElement('span');
 				b.className = 'campus-uid campus-uid-profile';
 				b.textContent = 'UID ' + data.uid;
-				nameEl.parentNode.insertBefore(b, nameEl.nextSibling);
+				// 放在名字「里面」，和用户名同一行，不再单独占一行
+				nameEl.appendChild(b);
 			}
 		}
 	}

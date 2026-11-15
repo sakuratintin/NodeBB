@@ -2398,3 +2398,130 @@ a:not(.btn):not(.nav-link):not(.text-reset):hover {
 		bottom: 72px;
 	}
 }
+
+// ===========================================================
+//  27. 个人主页整理（手机优先）
+// ===========================================================
+
+// UID 徽章：跟在用户名后面，同一行
+.campus-uid-profile {
+	margin-left: 8px;
+	padding: 2px 9px;
+	font-size: 11.5px;
+	font-weight: 600;
+	vertical-align: middle;
+}
+
+// 统计小卡：更紧凑、圆角统一
+.account-stats {
+	.card {
+		padding: 10px 8px !important;
+		background: #fdf9fb;
+		border: 1px solid #f4e8ee !important;
+		border-radius: 12px !important;
+	}
+
+	.stat-label {
+		color: #8b8b93;
+		font-size: 11px;
+	}
+
+	.fs-2 {
+		font-size: 19px !important;
+		font-weight: 600;
+	}
+}
+
+@media (max-width: 991.98px) {
+	// 个人主页左右布局：改成上下排列，留出底部导航空间
+	.account {
+		padding-bottom: 84px;
+	}
+
+	.account-content {
+		padding-left: 4px;
+		padding-right: 4px;
+	}
+
+	// 左侧菜单（关于 / 帖子 / 主题 …）在手机上变成一排小胶囊，可横向滑动
+	.account .btn.btn-sm.text-start {
+		display: inline-flex !important;
+		gap: 6px;
+		align-items: center;
+		width: auto !important;
+		margin: 2px 4px 2px 0;
+		padding: 6px 12px !important;
+		font-size: 13px;
+		font-weight: 500;
+		color: #4b5563;
+		background: #fdf9fb;
+		border: 1px solid #f4e8ee;
+		border-radius: 999px;
+
+		.text-xs {
+			color: #b05a78;
+			font-weight: 600;
+		}
+
+		&:hover {
+			color: #f7608a;
+			background: #fdf2f6;
+			border-color: #f7d3e0;
+		}
+	}
+
+	// 子导航（编辑资料 / 设置 / 账户信息 …）：一行可滑动
+	.account .nav,
+	.account .nav-pills,
+	.account-sub-links {
+		flex-wrap: nowrap !important;
+		gap: 6px !important;
+		overflow-x: auto;
+		padding-bottom: 4px;
+		scrollbar-width: none;
+
+		&::-webkit-scrollbar {
+			display: none;
+		}
+	}
+
+	.account .nav-link,
+	.account-sub-links a {
+		white-space: nowrap;
+		padding: 7px 13px !important;
+		font-size: 13px;
+		color: #4b5563;
+		background: #fdf9fb;
+		border: 1px solid #f4e8ee;
+		border-radius: 999px;
+
+		&.active,
+		&:hover {
+			color: #f7608a;
+			background: #fdf2f6;
+			border-color: #f7d3e0;
+		}
+	}
+
+	// 设置页标题与保存按钮同行，不再各占一行
+	.account-content h3,
+	.account-content h4 {
+		font-size: 19px;
+		margin-bottom: 10px;
+	}
+}
+
+// 隐藏「选择皮肤」相关控件（全站固定粉色主题）
+#bootswatchSkin,
+label[for="bootswatchSkin"],
+.mb-3:has(#bootswatchSkin),
+.mb-4:has(#bootswatchSkin),
+.form-group:has(#bootswatchSkin) {
+	display: none !important;
+}
+
+// 用户设置里的「主题设置」标签页也藏掉
+.account .nav-link[href$="/theme"],
+.account-sub-links a[href$="/theme"] {
+	display: none !important;
+}
