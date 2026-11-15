@@ -44,11 +44,122 @@
 			'      <button type="button" class="campus-world-close" title="关闭"><i class="fa fa-times"></i></button>' +
 			'    </div>' +
 			'  </header>' +
+			'  <form class="campus-world-quick">' +
+			'    <textarea class="campus-world-quick-text" rows="2" maxlength="5000" placeholder="说点什么…"></textarea>' +
+			'    <div class="campus-world-quick-row">' +
+			'      <select class="campus-world-quick-cid" aria-label="选择版块"></select>' +
+			'      <button type="submit" class="campus-world-quick-send"><i class="fa fa-paper-plane"></i> 发布</button>' +
+			'    </div>' +
+			'  </form>' +
 			'  <div class="campus-world-list"></div>' +
 			'  <footer class="campus-world-foot">最近 24 小时的帖子 · 按时间倒序</footer>' +
 			'</section>';
 		document.body.appendChild(el);
 		return el;
+	}
+
+	function loadCategories(select) {
+		if (select.dataset.loaded) return;
+		select.dataset.loaded = '1';
+		fetch('/api/categories', { credentials: 'same-origin' })
+			.then(function (r) { return r.json(); })
+			.then(function (data) {
+				var list = (data && data.categories) || [];
+				var options = [];
+				list.forEach(function (c) {
+					if (!c || !c.cid) return;
+					options.push({ cid: c.cid, name: c.name, depth: 0 });
+					(c.children || []).forEach(function (sub) {
+						if (sub && sub.cid) options.push({ cid: sub.cid, name: sub.name, depth: 1 });
+					});
+				});
+				select.innerHTML = options
+					.map(function (o) {
+						return '<option value="' + o.cid + '">' + (o.depth ? '　└ ' : '') + esc(o.name) + '</option>';
+					})
+					.join('');
+				// 默认选「综合讨论」，没有就选第一个
+				var def = options.filter(function (o) { return o.name.indexOf('综合') === 0; })[0] || options[0];
+				if (def) select.value = String(def.cid);
+			})
+			.catch(function () {
+				select.dataset.loaded = '';
+			});
+	}
+
+	function bindQuickPost(el) {
+		var form = el.querySelector('.campus-world-quick');
+		var text = el.querySelector('.campus-world-quick-text');
+		var select = el.querySelector('.campus-world-quick-cid');
+		var send = el.querySelector('.campus-world-quick-send');
+		var list = el.querySelector('.campus-world-list');
+
+		loadCategories(select);
+
+		form.addEventListener('submit', function (e) {
+			e.preventDefault();
+			var content = (text.value || '').trim();
+			if (!content) {
+				text.focus();
+				return;
+			}
+
+			var uid = window.app && window.app.user && window.app.user.uid;
+			if (!uid) {
+				toast('请先登录再发帖');
+				location.href = '/login';
+				return;
+			}
+
+			var cid = parseInt(select.value, 10) || 2;
+			var title = content.replace(/[#>*`_\-\n\r]+/g, ' ').trim().slice(0, 40) || '快速发帖';
+
+			send.disabled = true;
+			send.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 发布中';
+
+			fetch('/api/v3/topics', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: {
+					'Content-Type': 'application/json',
+					'x-csrf-token': (window.config && window.config.csrf_token) || '',
+				},
+				body: JSON.stringify({ cid: cid, title: title, content: content }),
+			})
+				.then(function (r) {
+					return r.json().catch(function () { return {}; }).then(function (d) {
+						if (!r.ok) {
+							var msg = (d && d.status && d.status.message) || (d && d.error) || ('发布失败（HTTP ' + r.status + '）');
+							throw new Error(msg);
+						}
+						return d;
+					});
+				})
+				.then(function () {
+					text.value = '';
+					toast('发布成功 🌸');
+					load(list, true);
+				})
+				.catch(function (err) {
+					toast(err.message || '发布失败');
+				})
+				.then(function () {
+					send.disabled = false;
+					send.innerHTML = '<i class="fa fa-paper-plane"></i> 发布';
+				});
+		});
+	}
+
+	function toast(msg) {
+		var t = document.createElement('div');
+		t.className = 'campus-world-toast';
+		t.textContent = msg;
+		document.body.appendChild(t);
+		setTimeout(function () { t.classList.add('show'); }, 10);
+		setTimeout(function () {
+			t.classList.remove('show');
+			setTimeout(function () { t.remove(); }, 250);
+		}, 2200);
 	}
 
 	function ensurePanel() {
@@ -148,6 +259,7 @@
 		el.querySelector('.campus-world-refresh').addEventListener('click', function () {
 			load(el.querySelector('.campus-world-list'), true);
 		});
+		bindQuickPost(el);
 		document.addEventListener('keydown', function (e) {
 			if (e.key === 'Escape') close();
 		});
@@ -198,21 +310,49 @@
 		addMobileEntries();
 	}
 
+	function isHome() {
+		var p = location.pathname.replace(/\/+$/, '');
+		return p === '' || p === '/' || p === '/categories';
+	}
+
 	function boot() {
 		var el = ensurePanel();
 		wire(el);
 		bindTriggers();
 	}
 
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', boot);
-	} else {
+	// 首次进站（首页）直接打开「世界」
+	var autoShown = false;
+	function autoOpen() {
+		if (autoShown) return;
+		if (!isHome()) return;
+		autoShown = true;
+		setTimeout(function () {
+			try { open(); } catch (e) {}
+		}, 250);
+	}
+
+	function startup() {
 		boot();
+		autoOpen();
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', startup);
+	} else {
+		startup();
 	}
 
 	if (window.jQuery && window.jQuery.fn) {
 		window.jQuery(window).on('action:ajaxify.end', function () {
-			try { boot(); } catch (e) {}
+			try {
+				boot();
+				// 通过站内跳转回到首页，也打开世界
+				if (!document.body.classList.contains('campus-world-open')) {
+					autoShown = false;
+					autoOpen();
+				}
+			} catch (e) {}
 		});
 		window.jQuery(window).on('action:widgets.loaded', function () {
 			try { addMobileEntries(); } catch (e) {}

@@ -2676,6 +2676,92 @@ label[for="bootswatchSkin"],
 		overflow-y: auto;
 	}
 
+	// ---------- 快速发帖 ----------
+	.campus-world-quick {
+		padding: 12px 16px;
+		background: #fff;
+		border-bottom: 1px solid #f4e8ee;
+	}
+
+	.campus-world-quick-text {
+		width: 100%;
+		min-height: 62px;
+		padding: 10px 12px;
+		font-size: 14px;
+		line-height: 1.6;
+		color: #3f3f46;
+		background: #fdfbfc;
+		border: 1px solid #f2e0e8;
+		border-radius: 12px;
+		resize: vertical;
+
+		&:focus {
+			outline: 0;
+			background: #fff;
+			border-color: #f7a8c4;
+			box-shadow: 0 0 0 3px rgba(247, 96, 138, 0.1);
+		}
+
+		&::placeholder {
+			color: #b6b6bf;
+		}
+	}
+
+	.campus-world-quick-row {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+		margin-top: 8px;
+	}
+
+	.campus-world-quick-cid {
+		flex: 1;
+		min-width: 0;
+		padding: 8px 10px;
+		font-size: 13px;
+		color: #4b5563;
+		background: #fdfbfc;
+		border: 1px solid #f2e0e8;
+		border-radius: 10px;
+
+		&:focus {
+			outline: 0;
+			border-color: #f7a8c4;
+		}
+	}
+
+	.campus-world-quick-send {
+		display: inline-flex;
+		gap: 5px;
+		align-items: center;
+		padding: 9px 18px;
+		color: #fff;
+		font-size: 13.5px;
+		font-weight: 600;
+		white-space: nowrap;
+		cursor: pointer;
+		background: linear-gradient(135deg, #ff8fb1, #f7608a);
+		border: 0;
+		border-radius: 10px;
+		transition: transform 0.16s ease, box-shadow 0.16s ease;
+
+		&:hover {
+			box-shadow: 0 6px 16px rgba(247, 96, 138, 0.28);
+			transform: translateY(-1px);
+		}
+
+		&:active {
+			transform: scale(0.97);
+		}
+
+		&:disabled {
+			opacity: 0.7;
+			cursor: default;
+			box-shadow: none;
+			transform: none;
+		}
+	}
+
 	.campus-world-foot {
 		padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
 		color: #9aa3af;
@@ -2827,11 +2913,35 @@ label[for="bootswatchSkin"],
 	.campus-world .campus-world-head {
 		padding-top: calc(14px + env(safe-area-inset-top, 0px));
 	}
+
+	.campus-world .campus-world-quick-text {
+		min-height: 56px;
+	}
+}
+
+// 轻提示
+.campus-world-toast {
+	position: fixed;
+	top: 24px;
+	left: 50%;
+	z-index: 1090;
+	padding: 10px 18px;
+	color: #fff;
+	font-size: 13.5px;
+	background: rgba(38, 38, 44, 0.92);
+	border-radius: 999px;
+	opacity: 0;
+	transform: translate(-50%, -12px);
+	transition: opacity 0.22s ease, transform 0.22s ease;
+
+	&.show {
+		opacity: 1;
+		transform: translate(-50%, 0);
+	}
 }
 
 // 手机底部导航里新增的两个图标
-.bottombar .bottombar-nav .campus-bar-btn {
-	display: inline-flex;
+.bottombar .bottombar-nav .campus-bar-btn {	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	padding: 4px 6px;
