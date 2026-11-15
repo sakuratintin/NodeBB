@@ -2707,6 +2707,62 @@ label[for="bootswatchSkin"],
 		}
 	}
 
+	// 可选标题：默认折叠
+	.campus-world-quick-title-toggle {
+		display: inline-flex;
+		gap: 5px;
+		align-items: center;
+		margin-bottom: 6px;
+		padding: 2px 0;
+		color: #9aa3af;
+		font-size: 12.5px;
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+		transition: color 0.16s ease;
+
+		i {
+			font-size: 10px;
+			transition: transform 0.16s ease;
+		}
+
+		&:hover {
+			color: #f7608a;
+		}
+
+		&.active i {
+			transform: rotate(45deg);
+		}
+	}
+
+	.campus-world-quick-title {
+		width: 100%;
+		padding: 9px 12px;
+		margin-bottom: 8px;
+		font-size: 14px;
+		font-weight: 600;
+		color: #3f3f46;
+		background: #fdfbfc;
+		border: 1px solid #f2e0e8;
+		border-radius: 10px;
+
+		&.hidden {
+			display: none !important;
+		}
+
+		&:focus {
+			outline: 0;
+			background: #fff;
+			border-color: #f7a8c4;
+			box-shadow: 0 0 0 3px rgba(247, 96, 138, 0.1);
+		}
+
+		&::placeholder {
+			color: #b6b6bf;
+			font-weight: 400;
+		}
+	}
+
 	.campus-world-quick-row {
 		display: flex;
 		gap: 8px;

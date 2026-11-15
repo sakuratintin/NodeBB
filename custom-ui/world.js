@@ -45,6 +45,9 @@
 			'    </div>' +
 			'  </header>' +
 			'  <form class="campus-world-quick">' +
+			'    <button type="button" class="campus-world-quick-title-toggle">' +
+			'      <i class="fa fa-plus"></i><span>添加标题（可选）</span></button>' +
+			'    <input class="campus-world-quick-title hidden" type="text" maxlength="120" placeholder="标题（不填会自动截取正文开头）">' +
 			'    <textarea class="campus-world-quick-text" rows="2" maxlength="5000" placeholder="说点什么…"></textarea>' +
 			'    <div class="campus-world-quick-row">' +
 			'      <select class="campus-world-quick-cid" aria-label="选择版块"></select>' +
@@ -90,11 +93,21 @@
 	function bindQuickPost(el) {
 		var form = el.querySelector('.campus-world-quick');
 		var text = el.querySelector('.campus-world-quick-text');
+		var titleInput = el.querySelector('.campus-world-quick-title');
+		var titleToggle = el.querySelector('.campus-world-quick-title-toggle');
 		var select = el.querySelector('.campus-world-quick-cid');
 		var send = el.querySelector('.campus-world-quick-send');
 		var list = el.querySelector('.campus-world-list');
 
 		loadCategories(select);
+
+		titleToggle.addEventListener('click', function () {
+			var opening = titleInput.classList.contains('hidden');
+			titleInput.classList.toggle('hidden', !opening);
+			titleToggle.classList.toggle('active', opening);
+			titleToggle.querySelector('span').textContent = opening ? '收起标题' : '添加标题（可选）';
+			if (opening) titleInput.focus();
+		});
 
 		form.addEventListener('submit', function (e) {
 			e.preventDefault();
@@ -112,7 +125,8 @@
 			}
 
 			var cid = parseInt(select.value, 10) || 2;
-			var title = content.replace(/[#>*`_\-\n\r]+/g, ' ').trim().slice(0, 40) || '快速发帖';
+			var manualTitle = (titleInput.value || '').trim();
+			var title = manualTitle || content.replace(/[#>*`_\-\n\r]+/g, ' ').trim().slice(0, 40) || '快速发帖';
 
 			send.disabled = true;
 			send.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 发布中';
@@ -137,6 +151,7 @@
 				})
 				.then(function () {
 					text.value = '';
+					titleInput.value = '';
 					toast('发布成功 🌸');
 					load(list, true);
 				})
