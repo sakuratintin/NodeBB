@@ -442,21 +442,10 @@
 			}
 		}
 
-		// 手机底部导航：世界 + 热点
+		// 手机底部导航：只加「热点速看」（首页本身就是世界，无需再加地球图标）
 		var bar = document.querySelector('.bottombar .bottombar-nav');
 		if (bar && !bar.dataset.campusExtra) {
 			bar.dataset.campusExtra = '1';
-
-			var world = document.createElement('a');
-			world.href = '#';
-			world.className = 'campus-bar-btn';
-			world.title = '世界';
-			world.innerHTML = '<i class="fa fa-globe"></i>';
-			world.addEventListener('click', function (e) {
-				e.preventDefault();
-				if (window.ajaxify && window.ajaxify.go) window.ajaxify.go('/');
-				else location.href = '/';
-			});
 
 			var hot = document.createElement('a');
 			hot.href = '#';
@@ -469,8 +458,7 @@
 				if (btn) btn.click();
 			});
 
-			bar.insertBefore(world, bar.firstChild);
-			bar.insertBefore(hot, world.nextSibling);
+			bar.insertBefore(hot, bar.firstChild);
 		}
 	}
 

@@ -2534,11 +2534,12 @@ label[for="bootswatchSkin"],
 
 	.campus-nav-world {
 		display: flex;
-		gap: 10px;
+		gap: 8px;
 		align-items: center;
 		padding: 10px 12px;
 		color: #4b5563;
 		font-weight: 500;
+		white-space: nowrap;
 		background: linear-gradient(135deg, #fff5f8, #fdeaf1);
 		border: 1px solid #f7d3e0;
 		border-radius: 12px;
@@ -2556,15 +2557,21 @@ label[for="bootswatchSkin"],
 	}
 
 	.campus-nav-world-icon {
-		width: 18px;
-		font-size: 15px;
+		flex: 0 0 auto;
+		width: 16px;
+		font-size: 14px;
 		color: #f7608a;
 		text-align: center;
 	}
 
 	.campus-nav-world-text {
-		font-size: 14px;
+		flex: 1 1 auto;
+		min-width: 0;
+		overflow: hidden;
+		font-size: 13.5px;
 		letter-spacing: 0.5px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 }
 
@@ -3059,11 +3066,14 @@ body.campus-home-world #content > *:not(#campus-world-inline) {
 	}
 }
 
-// 手机底部导航里新增的两个图标
-.bottombar .bottombar-nav .campus-bar-btn {	display: inline-flex;
+// 手机底部导航里新增的图标（与原有图标保持同样大小和间距）
+.bottombar .bottombar-nav .campus-bar-btn {
+	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	padding: 4px 6px;
+	width: 34px;
+	height: 34px;
+	font-size: 17px;
 	color: #4b5563;
 	cursor: pointer;
 	border-radius: 10px;
@@ -3073,6 +3083,46 @@ body.campus-home-world #content > *:not(#campus-world-inline) {
 		color: #f7608a;
 		background: #fdf2f6;
 		transform: scale(0.92);
+	}
+}
+
+// 底部导航整体：图标均匀分布，别挤在一起
+.bottombar .bottombar-nav {
+	display: flex !important;
+	gap: 2px;
+	align-items: center;
+	justify-content: space-around;
+
+	> a,
+	> .pointer,
+	> button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: 0 0 auto;
+	}
+
+	.fa,
+	.avatar {
+		font-size: 17px;
+	}
+}
+
+@media (max-width: 400px) {
+	.bottombar .bottombar-nav {
+		padding: 6px 8px !important;
+		margin: 0 6px 8px;
+
+		.campus-bar-btn {
+			width: 30px;
+			height: 30px;
+			font-size: 15px;
+		}
+
+		.fa,
+		.avatar {
+			font-size: 15px;
+		}
 	}
 }
 
