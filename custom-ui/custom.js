@@ -116,6 +116,19 @@
 
 		nav.insertBefore(wrap, nav.firstChild);
 
+		// ---------- 左侧导航：新增「世界」入口（全站所有帖子） ----------
+		if (!document.getElementById('campus-nav-world')) {
+			var worldItem = document.createElement('li');
+			worldItem.className = 'nav-item campus-nav-world-item';
+			worldItem.id = 'campus-nav-world';
+			worldItem.innerHTML =
+				'<a class="nav-link campus-nav-world" href="' + rp + '/recent" title="看看全站所有帖子">' +
+				'<i class="fa fa-globe campus-nav-world-icon" aria-hidden="true"></i>' +
+				'<span class="campus-nav-world-text">世界</span>' +
+				'</a>';
+			nav.insertBefore(worldItem, wrap.nextSibling);
+		}
+
 		var form = wrap.querySelector('form');
 		var input = wrap.querySelector('.campus-search-input');
 		var panel = wrap.querySelector('.campus-search-results');
