@@ -146,27 +146,53 @@
 			panel.style.left = Math.round(rect.left) + 'px';
 		}
 
-		function render(users) {
-			if (!users || !users.length) {
+		function render(users, posts) {
+			users = users || [];
+			posts = posts || [];
+			if (!users.length && !posts.length) {
 				hidePanel();
 				return;
 			}
-			panel.innerHTML = users.map(function (u) {
-				return '<a class="campus-search-hit" href="' + rp + '/user/' + u.userslug + '">' +
-					'<span class="campus-hit-avatar">' + String(u.username || '?').slice(0, 1).toUpperCase() + '</span>' +
-					'<span class="campus-hit-name">' + u.username + '</span>' +
-					'<span class="campus-hit-uid">UID ' + u.uid + '</span>' +
-					'</a>';
-			}).join('');
+
+			var html = '';
+
+			if (users.length) {
+				html += '<div class="campus-search-group"><span class="campus-search-group-title">用户</span>';
+				html += users.map(function (u) {
+					var pic = u.picture
+						? '<img class="campus-hit-avatar" src="' + u.picture + '" alt="">'
+						: '<span class="campus-hit-avatar">' + String(u.username || '?').slice(0, 1).toUpperCase() + '</span>';
+					return '<a class="campus-search-hit" href="' + rp + '/user/' + u.userslug + '">' +
+						pic +
+						'<span class="campus-hit-name">' + u.username + '</span>' +
+						'<span class="campus-hit-uid">UID ' + u.uid + '</span>' +
+						'</a>';
+				}).join('');
+				html += '</div>';
+			}
+
+			if (posts.length) {
+				html += '<div class="campus-search-group"><span class="campus-search-group-title">帖子</span>';
+				html += posts.map(function (p) {
+					var href = rp + '/topic/' + (p.slug || p.tid);
+					return '<a class="campus-search-post" href="' + href + '">' +
+						'<span class="campus-post-title"><i class="fa fa-file-text-o"></i>' + (p.title || '无标题帖子') + '</span>' +
+						(p.snippet ? '<span class="campus-post-snippet">' + p.snippet + '</span>' : '') +
+						'</a>';
+				}).join('');
+				html += '</div>';
+			}
+
+			panel.innerHTML = html;
 			panel.hidden = false;
 			positionPanel();
 		}
 
 		function lookup(q) {
-			return fetch('/api/campus/find?q=' + encodeURIComponent(q), { credentials: 'same-origin' })
+			return fetch('/api/campus/find?q=' + encodeURIComponent(q) + '&limit=8', { credentials: 'same-origin' })
 				.then(function (r) { return r.json(); })
-				.then(function (d) { return (d && d.users) || []; })
-				.catch(function () { return []; });
+				.then(function (d) { return { users: (d && d.users) || [], posts: (d && d.posts) || [] }; })
+				.catch(function () { return { users: [], posts: [] }; });
 		}
 
 		input.addEventListener('input', function () {
@@ -177,7 +203,7 @@
 				return;
 			}
 			timer = setTimeout(function () {
-				lookup(q).then(render);
+				lookup(q).then(function (d) { render(d.users, d.posts); });
 			}, 220);
 		});
 
@@ -187,16 +213,21 @@
 				e.preventDefault();
 				return;
 			}
-			// 纯数字：先当 UID 找用户；找不到再走普通搜索
-			if (/^\d{1,10}$/.test(q)) {
-				e.preventDefault();
-				lookup(q).then(function (users) {
-					var u = users[0];
-					window.location.assign(u && u.userslug
-						? rp + '/user/' + u.userslug
-						: rp + '/search?term=' + encodeURIComponent(q));
-				});
-			}
+
+			// 回车：优先落到最相关的帖子，其次用户；都没有才进全站搜索
+			e.preventDefault();
+			lookup(q).then(function (d) {
+				var target = '';
+				if (d.posts && d.posts.length) {
+					target = rp + '/topic/' + (d.posts[0].slug || d.posts[0].tid);
+				} else if (d.users && d.users.length && d.users[0].userslug) {
+					target = rp + '/user/' + d.users[0].userslug;
+				} else {
+					target = rp + '/search?term=' + encodeURIComponent(q);
+				}
+				render(d.users, d.posts);
+				setTimeout(function () { window.location.assign(target); }, 120);
+			});
 		});
 
 		document.addEventListener('click', function (e) {

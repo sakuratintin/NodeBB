@@ -474,30 +474,118 @@ plugin.init = async function (params) {
 	});
 
 	// 搜索建议：按用户名或 UID 找人
+	// ---------- 站内搜索：用户 + 帖子（解决中文分词搜不到的问题） ----------
 	router.get('/api/campus/find', async (req, res) => {
 		const q = String((req.query && req.query.q) || '').trim();
+		const limit = Math.min(parseInt((req.query && req.query.limit) || '10', 10) || 10, 30);
 		if (!q) {
-			return res.json({ users: [] });
+			return res.json({ users: [], posts: [] });
 		}
+
+		const stripHtml = (html) =>
+			String(html || '')
+				.replace(/<br\s*\/?>/gi, ' ')
+				.replace(/<\/(p|div|li)>/gi, ' ')
+				.replace(/<[^>]+>/g, '')
+				.replace(/&nbsp;/g, ' ')
+				.replace(/&amp;/g, '&')
+				.replace(/&lt;/g, '<')
+				.replace(/&gt;/g, '>')
+				.replace(/&quot;/g, '"')
+				.replace(/&#39;/g, "'")
+				.replace(/\s+/g, ' ')
+				.trim();
+
+		const snippet = (text, term) => {
+			if (!text) return '';
+			const lower = text.toLowerCase();
+			const idx = lower.indexOf(term.toLowerCase());
+			if (idx < 0) return text.slice(0, 90);
+			const start = Math.max(0, idx - 30);
+			const end = Math.min(text.length, idx + term.length + 60);
+			return (start > 0 ? '…' : '') + text.slice(start, end) + (end < text.length ? '…' : '');
+		};
+
+		let users = [];
+		let posts = [];
+
+		// ① 用户
 		try {
 			const user = require.main.require('./src/user');
-
-			// 纯数字：当成 UID 精确查
 			if (/^\d{1,10}$/.test(q)) {
 				const data = await user.getUserFields(parseInt(q, 10), [
 					'uid', 'username', 'userslug', 'picture', 'reputation', 'postcount', 'joindate',
 				]);
-				const found = data && data.username && data.uid ? [data] : [];
-				return res.json({ users: found });
+				users = data && data.username && data.uid ? [data] : [];
+			} else {
+				const result = await user.search({ query: q, searchBy: 'username', paginate: false });
+				users = (result && result.users ? result.users : []).slice(0, 6);
 			}
-
-			// 其他：按用户名模糊搜
-			const result = await user.search({ query: q, searchBy: 'username', paginate: false });
-			const users = (result && result.users ? result.users : []).slice(0, 6);
-			return res.json({ users });
 		} catch (err) {
-			return res.json({ users: [], error: err.message });
+			users = [];
 		}
+
+		// ② 帖子正文 + 标题（ILIKE 模糊匹配，中文不做分词也能命中）
+		try {
+			const like = '%' + q.replace(/[\\%_]/g, (m) => '\\' + m) + '%';
+
+			const byContent = await db.pool.query(
+				`SELECT p.data->>'tid' AS tid,
+				        p.data->>'content' AS content,
+				        COALESCE(t.data->>'title', '') AS title,
+				        COALESCE(t.data->>'slug', '') AS slug,
+				        COALESCE((p.data->>'timestamp')::bigint, 0) AS ts
+				 FROM legacy_hash p
+				 LEFT JOIN legacy_hash t ON t._key = 'topic:' || (p.data->>'tid')
+				 WHERE p._key LIKE 'post:%'
+				   AND p.data->>'content' ILIKE $1
+				 ORDER BY ts DESC
+				 LIMIT $2`,
+				[like, limit]
+			);
+
+			const seen = new Set();
+			posts = (byContent.rows || []).map((r) => {
+				const text = stripHtml(r.content);
+				const tid = parseInt(r.tid, 10);
+				seen.add(tid);
+				return {
+					tid,
+					title: r.title || '无标题帖子',
+					slug: r.slug || String(tid),
+					snippet: snippet(text, q),
+					timestamp: Number(r.ts) || 0,
+				};
+			});
+
+			// 正文没命中时，再按标题找一遍
+			if (!posts.length) {
+				const byTitle = await db.pool.query(
+					`SELECT data->>'tid' AS tid,
+					        data->>'title' AS title,
+					        data->>'slug' AS slug,
+					        COALESCE((data->>'timestamp')::bigint, 0) AS ts
+					 FROM legacy_hash
+					 WHERE _key LIKE 'topic:%'
+					   AND data->>'title' ILIKE $1
+					 ORDER BY ts DESC
+					 LIMIT $2`,
+					[like, limit]
+				);
+				posts = (byTitle.rows || []).map((r) => ({
+					tid: parseInt(r.tid, 10),
+					title: r.title || '无标题帖子',
+					slug: r.slug || String(parseInt(r.tid, 10)),
+					snippet: snippet(String(r.title || ''), q),
+					timestamp: Number(r.ts) || 0,
+				}));
+			}
+		} catch (err) {
+			console.error('[campus/find] 搜索失败:', err.message);
+			posts = [];
+		}
+
+		return res.json({ users, posts });
 	});
 
 	// 发送邮箱验证码
