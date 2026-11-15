@@ -380,7 +380,55 @@
 		setTimeout(send, 400);
 	}
 
-	// ---------- 发帖框：插入一个「@EVA」快捷按钮 ----------
+	// ---------- 发帖框：上传图片 / 上传文件 / 表情 / @EVA / @ ----------
+	function insertAtCursor(textarea, text) {
+		if (!textarea) return;
+		var start = textarea.selectionStart || 0;
+		var end = textarea.selectionEnd || 0;
+		var value = textarea.value || '';
+		textarea.value = value.slice(0, start) + text + value.slice(end);
+		var pos = start + text.length;
+		textarea.focus();
+		try {
+			textarea.setSelectionRange(pos, pos);
+		} catch (e) {}
+		textarea.dispatchEvent(new Event('input', { bubbles: true }));
+	}
+
+	function uploadFile(file) {
+		var fd = new FormData();
+		fd.append('files[]', file);
+		var csrf = (window.config && window.config.csrf_token) || '';
+		return fetch('/api/post/upload', {
+			method: 'POST',
+			headers: { 'x-csrf-token': csrf },
+			credentials: 'same-origin',
+			body: fd,
+		}).then(function (r) {
+			return r
+				.json()
+				.catch(function () {
+					return {};
+				})
+				.then(function (d) {
+					if (!r.ok) {
+						throw new Error((d && (d.error || d.message)) || '上传失败（HTTP ' + r.status + '）');
+					}
+					return d;
+				});
+		});
+	}
+
+	function makeToolButton(icon, title) {
+		var b = document.createElement('button');
+		b.type = 'button';
+		b.className = 'campus-composer-tool';
+		b.title = title;
+		b.setAttribute('aria-label', title);
+		b.innerHTML = '<i class="fa ' + icon + '" aria-hidden="true"></i>';
+		return b;
+	}
+
 	function enhanceComposer() {
 		var composers = document.querySelectorAll('[component="composer"]');
 		Array.prototype.forEach.call(composers, function (composer) {
@@ -388,6 +436,94 @@
 			var bar = composer.querySelector('.formatting-bar');
 			if (!bar) return;
 			composer.dataset.campusEva = '1';
+
+			// ① 上传图片（手机可直接拍照/选相册）
+			var imgBtn = makeToolButton('fa-image', '上传图片');
+			imgBtn.addEventListener('click', function () {
+				var textarea = composer.querySelector('textarea.write');
+				var input = document.createElement('input');
+				input.type = 'file';
+				input.accept = 'image/*';
+				input.onchange = function () {
+					var f = input.files && input.files[0];
+					if (!f || !textarea) return;
+					imgBtn.disabled = true;
+					uploadFile(f)
+						.then(function (res) {
+							var list = Array.isArray(res) ? res : [res];
+							list.forEach(function (item) {
+								if (!item || !item.url) return;
+								var name = item.name || 'image';
+								insertAtCursor(textarea, '![' + name + '](' + item.url + ')\n');
+							});
+						})
+						.catch(function (err) {
+							alert(err.message || '上传失败');
+						})
+						.then(function () {
+							imgBtn.disabled = false;
+						});
+				};
+				input.click();
+			});
+			bar.appendChild(imgBtn);
+
+			// ② 上传文件
+			var fileBtn = makeToolButton('fa-paperclip', '上传文件');
+			fileBtn.addEventListener('click', function () {
+				var textarea = composer.querySelector('textarea.write');
+				var input = document.createElement('input');
+				input.type = 'file';
+				input.onchange = function () {
+					var f = input.files && input.files[0];
+					if (!f || !textarea) return;
+					fileBtn.disabled = true;
+					uploadFile(f)
+						.then(function (res) {
+							var list = Array.isArray(res) ? res : [res];
+							list.forEach(function (item) {
+								if (!item || !item.url) return;
+								var name = item.name || '文件';
+								insertAtCursor(textarea, '[' + name + '](' + item.url + ')\n');
+							});
+						})
+						.catch(function (err) {
+							alert(err.message || '上传失败');
+						})
+						.then(function () {
+							fileBtn.disabled = false;
+						});
+				};
+				input.click();
+			});
+			bar.appendChild(fileBtn);
+
+			// ③ 表情
+			var EMOJIS = ['😀', '😄', '😁', '😊', '😍', '🥰', '😘', '😎', '🤔', '😅', '😂', '🤣', '😭', '😡', '😱', '👍', '👎', '👏', '🙏', '💪', '🎉', '❤️', '🔥', '✨', '🌙', '🌸', '🍀', '⭐'];
+			var emojiBtn = makeToolButton('fa-smile-o', '插入表情');
+			var emojiPanel = document.createElement('div');
+			emojiPanel.className = 'campus-emoji-panel hidden';
+			EMOJIS.forEach(function (emo) {
+				var b = document.createElement('button');
+				b.type = 'button';
+				b.textContent = emo;
+				b.addEventListener('click', function () {
+					insertAtCursor(composer.querySelector('textarea.write'), emo);
+					emojiPanel.classList.add('hidden');
+				});
+				emojiPanel.appendChild(b);
+			});
+			emojiBtn.addEventListener('click', function (e) {
+				e.stopPropagation();
+				emojiPanel.classList.toggle('hidden');
+			});
+			document.addEventListener('click', function (e) {
+				if (!emojiPanel.contains(e.target) && e.target !== emojiBtn) {
+					emojiPanel.classList.add('hidden');
+				}
+			});
+			bar.appendChild(emojiBtn);
+			composer.appendChild(emojiPanel);
 
 			var btn = document.createElement('button');
 			btn.type = 'button';

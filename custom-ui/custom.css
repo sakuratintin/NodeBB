@@ -2304,3 +2304,97 @@ a:not(.btn):not(.nav-link):not(.text-reset):hover {
 		font-size: 16px;
 	}
 }
+
+// ---------- 隐藏「预览」「帮助」这两个用不上的按钮 ----------
+.composer .formatting-group > li:has(i.fa-eye),
+.composer .formatting-group > li:has(i.fa-question),
+.composer .formatting-group > li:has(i.fa-circle-question),
+.composer .formatting-group > li:has(i.fa-question-circle) {
+	display: none !important;
+}
+
+// ---------- 我新加的工具栏按钮 ----------
+.campus-composer-tool {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	color: #6b7280;
+	font-size: 15px;
+	cursor: pointer;
+	background: transparent;
+	border: 0;
+	border-radius: 9px;
+	flex: 0 0 auto;
+	transition: color 0.16s ease, background-color 0.16s ease;
+
+	&:hover {
+		color: #f7608a;
+		background: #fce7ee;
+	}
+
+	&:active {
+		transform: scale(0.94);
+	}
+
+	&:disabled {
+		opacity: 0.5;
+	}
+}
+
+// ---------- 表情面板 ----------
+.campus-emoji-panel {
+	position: absolute;
+	left: 8px;
+	bottom: 8px;
+	z-index: 20;
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 4px;
+	width: min(320px, calc(100vw - 32px));
+	padding: 10px;
+	background: #fff;
+	border: 1px solid #f2e0e8;
+	border-radius: 14px;
+	box-shadow: 0 12px 30px rgba(17, 24, 39, 0.16);
+
+	&.hidden {
+		display: none !important;
+	}
+
+	button {
+		width: 100%;
+		aspect-ratio: 1;
+		padding: 0;
+		font-size: 20px;
+		line-height: 1;
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+		border-radius: 8px;
+		transition: background-color 0.15s ease, transform 0.15s ease;
+
+		&:hover {
+			background: #fdf2f6;
+		}
+
+		&:active {
+			transform: scale(0.9);
+		}
+	}
+}
+
+@media (max-width: 991.98px) {
+	.campus-composer-tool {
+		width: 38px;
+		height: 38px;
+		font-size: 16px;
+	}
+
+	.campus-emoji-panel {
+		grid-template-columns: repeat(8, 1fr);
+		bottom: 72px;
+	}
+}
