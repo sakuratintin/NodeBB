@@ -99,16 +99,34 @@
 		Array.prototype.forEach.call(list.querySelectorAll('.campus-world-post'), function (card) {
 			var url = card.getAttribute('data-url');
 			if (!url) return;
+
+			function go() {
+				var path = url;
+				try {
+					var u = new URL(url, location.origin);
+					path = u.pathname + u.search;
+				} catch (e) {
+					/* 保持原样 */
+				}
+				if (window.ajaxify && window.ajaxify.go) {
+					try {
+						window.ajaxify.go(path);
+						return;
+					} catch (e) {
+						/* 退回整页跳转 */
+					}
+				}
+				location.href = path;
+			}
+
 			card.addEventListener('click', function (e) {
 				if (e.target.closest('a, button, img, video')) return;
-				if (window.ajaxify && window.ajaxify.go) window.ajaxify.go(url);
-				else location.href = url;
+				go();
 			});
 			card.addEventListener('keydown', function (e) {
 				if (e.key === 'Enter' || e.key === ' ') {
 					e.preventDefault();
-					if (window.ajaxify && window.ajaxify.go) window.ajaxify.go(url);
-					else location.href = url;
+					go();
 				}
 			});
 		});
