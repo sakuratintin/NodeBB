@@ -44,8 +44,9 @@
 	}
 
 	function isHome() {
+		// 只有真正的首页才算「世界」；/categories 是版块页，不在里面显示世界
 		var p = location.pathname.replace(/\/+$/, '');
-		return p === '' || p === '/' || p === '/categories';
+		return p === '';
 	}
 
 	// ---------------- 帖子流 ----------------
