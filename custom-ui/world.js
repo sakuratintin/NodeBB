@@ -103,6 +103,15 @@
 			.catch(function () { return []; });
 	}
 
+	// 只保留主帖（楼主的帖子），回复不进世界
+	function fetchMainPosts(term) {
+		return fetchPosts(term).then(function (list) {
+			return (list || []).filter(function (p) {
+				return p && p.isMainPost;
+			});
+		});
+	}
+
 	function load(list, force) {
 		if (loading) return;
 		if (!force && cached && Date.now() - cacheTime < CACHE_TTL) {
@@ -111,9 +120,10 @@
 		}
 		loading = true;
 		list.innerHTML = '<div class="campus-world-loading"><i class="fa fa-spinner fa-spin"></i> 正在加载…</div>';
-		fetchPosts('24h')
-			.then(function (posts) { return posts && posts.length ? posts : fetchPosts('7d'); })
-			.then(function (posts) { return posts && posts.length ? posts : fetchPosts('30d'); })
+		fetchMainPosts('24h')
+			.then(function (posts) { return posts && posts.length ? posts : fetchMainPosts('7d'); })
+			.then(function (posts) { return posts && posts.length ? posts : fetchMainPosts('30d'); })
+			.then(function (posts) { return posts && posts.length ? posts : fetchMainPosts('365d'); })
 			.then(function (posts) {
 				cached = posts || [];
 				cacheTime = Date.now();
