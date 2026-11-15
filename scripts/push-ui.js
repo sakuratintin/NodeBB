@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- * 把本地 custom-ui 的最新样式推送到指定数据库（用于线上环境）
+ * 把本地 custom-ui 的样式和脚本推送到指定数据库（用于线上环境）
  * 用法：
  *   $env:DB_HOST='dbconn.sealosgzg.site'; $env:DB_PORT='43932'; $env:DB_PASS='...'
  *   node scripts/push-ui.js
@@ -16,8 +16,16 @@ const cssParts = [
 	path.join(root, 'custom-ui', 'custom.css'),
 	path.join(root, 'plugins', 'nodebb-plugin-campus-ai', 'public', 'ai-chat.scss'),
 ];
+const jsParts = [
+	path.join(root, 'custom-ui', 'custom.js'),
+	path.join(root, 'custom-ui', 'hot.js'),
+	path.join(root, 'plugins', 'nodebb-plugin-campus-ai', 'public', 'ai-chat.js'),
+];
 
 const cssSource = cssParts
+	.map((f) => `/* ==== ${path.basename(f)} ==== */\n${fs.readFileSync(f, 'utf8')}`)
+	.join('\n\n');
+const jsSource = jsParts
 	.map((f) => `/* ==== ${path.basename(f)} ==== */\n${fs.readFileSync(f, 'utf8')}`)
 	.join('\n\n');
 
@@ -40,15 +48,17 @@ const cssSource = cssParts
 	data.customCSS = cssSource;
 	data.renderedCustomCSS = css;
 	data.useCustomCSS = 1;
+	data.customJS = jsSource;
+	data.useCustomJS = 1;
 
 	await client.query(`UPDATE legacy_hash SET data = $1::jsonb WHERE _key = 'config'`, [JSON.stringify(data)]);
 
 	const after = await client.query(`SELECT data FROM legacy_hash WHERE _key = 'config'`);
 	const d = after.rows[0].data;
-	console.log('已推送 CSS：');
-	console.log('  源码长度:', (d.customCSS || '').length);
-	console.log('  编译后长度:', (d.renderedCustomCSS || '').length);
-	console.log('  useCustomCSS:', d.useCustomCSS);
+	console.log('已推送：');
+	console.log('  CSS 源码:', (d.customCSS || '').length, '| 编译后:', (d.renderedCustomCSS || '').length);
+	console.log('  JS 源码:', (d.customJS || '').length);
+	console.log('  useCustomCSS:', d.useCustomCSS, '| useCustomJS:', d.useCustomJS);
 
 	await client.end();
 	process.exit(0);

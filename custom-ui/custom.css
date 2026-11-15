@@ -2216,3 +2216,91 @@ a:not(.btn):not(.nav-link):not(.text-reset):hover {
 		display: none !important;
 	}
 }
+
+// ===========================================================
+//  26. 发帖工具栏：PC / 手机都完整显示（图片、文件、表情、@）
+// ===========================================================
+
+// NodeBB 有些按钮用 Bootstrap 的 d-none 在手机上隐藏了，这里强制显示出来
+.composer .formatting-group {
+	display: flex !important;
+	flex-wrap: nowrap !important;
+	gap: 2px;
+	align-items: center;
+
+	> li {
+		display: inline-flex !important;
+		flex: 0 0 auto;
+	}
+
+	> li.spacer {
+		display: none !important;
+	}
+
+	.btn {
+		display: inline-flex !important;
+		align-items: center;
+		justify-content: center;
+		width: 34px;
+		height: 34px;
+		padding: 0 !important;
+		font-size: 15px;
+		border-radius: 9px;
+	}
+
+	// 下拉分组里的箭头也藏掉，只留图标
+	.btn::after {
+		display: none !important;
+	}
+}
+
+// 工具栏横向滚动（按钮多，手机上一定能滑到）
+.composer .formatting-bar {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+// 我加的「@」快捷按钮（插入 @ 触发用户联想）
+.campus-composer-mention {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	color: #6b7280;
+	font-size: 15px;
+	cursor: pointer;
+	background: transparent;
+	border: 0;
+	border-radius: 9px;
+	transition: color 0.16s ease, background-color 0.16s ease;
+
+	&:hover {
+		color: #f7608a;
+		background: #fce7ee;
+	}
+
+	&:active {
+		transform: scale(0.94);
+	}
+}
+
+@media (max-width: 991.98px) {
+	.composer .formatting-group .btn {
+		width: 38px;
+		height: 38px;
+		font-size: 16px;
+	}
+
+	.campus-composer-mention {
+		width: 38px;
+		height: 38px;
+		font-size: 16px;
+	}
+}

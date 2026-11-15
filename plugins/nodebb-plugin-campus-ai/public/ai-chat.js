@@ -163,6 +163,94 @@
 		var history = loadHistory();
 		var controller = null;
 		var busy = false;
+		var suppressClick = false;
+
+		// ---------- 气泡可拖动（手机上可以挪开，不挡输入框） ----------
+		(function makeBubbleDraggable() {
+			var POS_KEY = 'campusAiBubblePos';
+			var bubble = ui.bubble;
+			var dragging = false;
+			var moved = false;
+			var startX = 0;
+			var startY = 0;
+			var originLeft = 0;
+			var originTop = 0;
+
+			function clampAndApply(x, y) {
+				var w = bubble.offsetWidth || 52;
+				var h = bubble.offsetHeight || 52;
+				var maxX = window.innerWidth - w - 8;
+				var maxY = window.innerHeight - h - 8;
+				x = Math.max(8, Math.min(x, maxX));
+				y = Math.max(8, Math.min(y, maxY));
+				bubble.style.left = x + 'px';
+				bubble.style.top = y + 'px';
+				bubble.style.right = 'auto';
+				bubble.style.bottom = 'auto';
+			}
+
+			// 恢复上次拖到的位置
+			try {
+				var saved = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
+				if (saved && typeof saved.x === 'number' && typeof saved.y === 'number') {
+					clampAndApply(saved.x, saved.y);
+				}
+			} catch (e) {}
+
+			bubble.style.touchAction = 'none';
+			bubble.style.cursor = 'grab';
+
+			bubble.addEventListener('pointerdown', function (e) {
+				if (e.button !== undefined && e.button !== 0) return;
+				var rect = bubble.getBoundingClientRect();
+				originLeft = rect.left;
+				originTop = rect.top;
+				startX = e.clientX;
+				startY = e.clientY;
+				dragging = true;
+				moved = false;
+				bubble.style.cursor = 'grabbing';
+				if (bubble.setPointerCapture) {
+					try { bubble.setPointerCapture(e.pointerId); } catch (err) {}
+				}
+			});
+
+			bubble.addEventListener('pointermove', function (e) {
+				if (!dragging) return;
+				var dx = e.clientX - startX;
+				var dy = e.clientY - startY;
+				if (!moved && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) moved = true;
+				if (!moved) return;
+				clampAndApply(originLeft + dx, originTop + dy);
+				if (e.cancelable) e.preventDefault();
+			});
+
+			function endDrag() {
+				if (!dragging) return;
+				dragging = false;
+				bubble.style.cursor = 'grab';
+				if (moved) {
+					suppressClick = true;
+					var rect = bubble.getBoundingClientRect();
+					try {
+						localStorage.setItem(POS_KEY, JSON.stringify({ x: rect.left, y: rect.top }));
+					} catch (e) {}
+					// 拖到右边就贴边，保持整洁
+					clampAndApply(rect.left, rect.top);
+					setTimeout(function () { suppressClick = false; }, 300);
+				}
+			}
+
+			bubble.addEventListener('pointerup', endDrag);
+			bubble.addEventListener('pointercancel', endDrag);
+
+			window.addEventListener('resize', function () {
+				if (bubble.style.left) {
+					var rect = bubble.getBoundingClientRect();
+					clampAndApply(rect.left, rect.top);
+				}
+			});
+		})();
 
 		function scrollToBottom() {
 			ui.messages.scrollTop = ui.messages.scrollHeight;
@@ -266,6 +354,10 @@
 		}
 
 		ui.bubble.addEventListener('click', function () {
+			if (suppressClick) {
+				suppressClick = false;
+				return;
+			}
 			if (ui.root.classList.contains('open')) closePanel();
 			else open();
 		});

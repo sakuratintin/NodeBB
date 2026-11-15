@@ -412,6 +412,28 @@
 			});
 
 			bar.appendChild(btn);
+
+			// 「@」快捷按钮：插入 @ 触发用户联想（手机上没有 @ 键的输入法也能用）
+			var mentionBtn = document.createElement('button');
+			mentionBtn.type = 'button';
+			mentionBtn.className = 'campus-composer-mention';
+			mentionBtn.title = '提及用户（@用户名）';
+			mentionBtn.innerHTML = '<i class="fa fa-at" aria-hidden="true"></i>';
+			mentionBtn.addEventListener('click', function () {
+				var textarea = composer.querySelector('textarea.write');
+				if (!textarea) return;
+				var start = textarea.selectionStart || 0;
+				var end = textarea.selectionEnd || 0;
+				var value = textarea.value || '';
+				textarea.value = value.slice(0, start) + '@' + value.slice(end);
+				var pos = start + 1;
+				textarea.focus();
+				try {
+					textarea.setSelectionRange(pos, pos);
+				} catch (e) {}
+				textarea.dispatchEvent(new Event('input', { bubbles: true }));
+			});
+			bar.appendChild(mentionBtn);
 		});
 	}
 
