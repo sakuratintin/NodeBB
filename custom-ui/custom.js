@@ -283,6 +283,229 @@
 	}
 
 	// ---------- 邮箱验证码弹窗 ----------
+	// ---------- 注册页：邮箱验证码 → 创建账号 ----------
+	function campusAlert(type, msg) {
+		if (window.app && window.app.alert && window.app.alert[type]) {
+			window.app.alert[type](msg);
+		} else {
+			alert(msg);
+		}
+	}
+
+	function postJson(url, data) {
+		return fetch(url, {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: {
+				'Content-Type': 'application/json',
+				'x-csrf-token': (window.config && window.config.csrf_token) || '',
+			},
+			body: JSON.stringify(data || {}),
+		}).then(function (r) {
+			return r.json().catch(function () { return {}; }).then(function (d) {
+				if (!r.ok) throw new Error((d && d.error) || ('请求失败（' + r.status + '）'));
+				return d;
+			});
+		});
+	}
+
+	function startCooldown(btn, seconds) {
+		var left = seconds;
+		btn.disabled = true;
+		var original = btn.textContent;
+		btn.textContent = left + ' 秒';
+		var t = setInterval(function () {
+			left -= 1;
+			if (left <= 0) {
+				clearInterval(t);
+				btn.disabled = false;
+				btn.textContent = original;
+			} else {
+				btn.textContent = left + ' 秒';
+			}
+		}, 1000);
+	}
+
+	function enhanceRegister() {
+		var form = document.querySelector('form[component="register/local"]');
+		if (!form || form.dataset.campusReg) return;
+		form.dataset.campusReg = '1';
+
+		var usernameEl = form.querySelector('#username');
+		var emailEl = form.querySelector('#email');
+		var passEl = form.querySelector('#password');
+		var pass2El = form.querySelector('#password-confirm');
+		if (!usernameEl || !emailEl || !passEl) return;
+
+		var row = document.createElement('div');
+		row.className = 'campus-code-row';
+		row.innerHTML =
+			'<input class="campus-code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 位邮箱验证码">' +
+			'<button type="button" class="campus-code-send">获取验证码</button>';
+		emailEl.parentNode.insertBefore(row, emailEl.nextSibling);
+
+		var codeEl = row.querySelector('.campus-code-input');
+		var sendBtn = row.querySelector('.campus-code-send');
+
+		var hint = document.createElement('div');
+		hint.className = 'campus-code-hint';
+		hint.textContent = '注册需要邮箱验证：先点「获取验证码」，再去邮箱查看 6 位数字。';
+		row.parentNode.insertBefore(hint, row.nextSibling);
+
+		sendBtn.addEventListener('click', function () {
+			var username = (usernameEl.value || '').trim();
+			var email = (emailEl.value || '').trim();
+			var password = passEl.value || '';
+
+			if (!username || username.length < 2) return campusAlert('error', '请先填用户名（至少 2 个字符）');
+			if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return campusAlert('error', '请填写正确的邮箱');
+			if (password.length < 6) return campusAlert('error', '密码至少 6 位');
+
+			sendBtn.disabled = true;
+			postJson('/api/campus/register/send', { username: username, email: email, password: password })
+				.then(function (d) {
+					campusAlert('success', '验证码已发送到 ' + (d.email || email));
+					startCooldown(sendBtn, 60);
+					codeEl.focus();
+				})
+				.catch(function (err) {
+					sendBtn.disabled = false;
+					campusAlert('error', err.message);
+				});
+		});
+
+		form.addEventListener(
+			'submit',
+			function (e) {
+				e.preventDefault();
+
+				var username = (usernameEl.value || '').trim();
+				var email = (emailEl.value || '').trim();
+				var password = passEl.value || '';
+				var code = (codeEl.value || '').replace(/\D/g, '');
+
+				if (!username || username.length < 2) return campusAlert('error', '用户名至少 2 个字符');
+				if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return campusAlert('error', '请填写正确的邮箱');
+				if (password.length < 6) return campusAlert('error', '密码至少 6 位');
+				if (pass2El && pass2El.value !== password) return campusAlert('error', '两次输入的密码不一致');
+				if (code.length !== 6) return campusAlert('error', '请输入邮箱收到的 6 位验证码');
+
+				var submitBtn = form.querySelector('button[type="submit"], .btn-primary');
+				if (submitBtn) submitBtn.disabled = true;
+
+				postJson('/api/campus/register/verify', {
+					username: username,
+					email: email,
+					password: password,
+					code: code,
+				})
+					.then(function () {
+						campusAlert('success', '注册成功，正在进入论坛…');
+						setTimeout(function () { window.location.assign('/'); }, 800);
+					})
+					.catch(function (err) {
+						if (submitBtn) submitBtn.disabled = false;
+						campusAlert('error', err.message);
+					});
+			},
+			true
+		);
+	}
+
+	// ---------- 登录页：忘记密码（邮箱验证后重设） ----------
+	function enhanceLogin() {
+		var form = document.getElementById('login-form');
+		if (!form || form.dataset.campusForgot) return;
+		form.dataset.campusForgot = '1';
+
+		var link = document.createElement('button');
+		link.type = 'button';
+		link.className = 'campus-forgot';
+		link.textContent = '忘记密码？用邮箱验证码重置';
+		form.appendChild(link);
+
+		link.addEventListener('click', function (e) {
+			e.preventDefault();
+			openPasswordModal();
+		});
+	}
+
+	function openPasswordModal() {
+		if (document.getElementById('campus-pwd-modal')) return;
+
+		var el = document.createElement('div');
+		el.id = 'campus-pwd-modal';
+		el.className = 'campus-modal';
+		el.innerHTML =
+			'<div class="campus-modal-backdrop"></div>' +
+			'<div class="campus-modal-card">' +
+			'  <header class="campus-modal-head"><span><i class="fa fa-key"></i> 重置密码</span>' +
+			'    <button type="button" class="campus-modal-close"><i class="fa fa-times"></i></button></header>' +
+			'  <div class="campus-modal-body">' +
+			'    <label class="campus-field"><span>注册邮箱</span>' +
+			'      <input class="campus-pwd-email" type="email" placeholder="you@example.com"></label>' +
+			'    <div class="campus-code-row">' +
+			'      <input class="campus-pwd-code" inputmode="numeric" maxlength="6" placeholder="6 位验证码">' +
+			'      <button type="button" class="campus-pwd-send">发送验证码</button>' +
+			'    </div>' +
+			'    <label class="campus-field"><span>新密码（至少 6 位）</span>' +
+			'      <input class="campus-pwd-pass" type="password" autocomplete="new-password" placeholder="新密码"></label>' +
+			'    <button type="button" class="campus-pwd-submit">确认修改</button>' +
+			'    <p class="campus-modal-tip">修改成功后请用新密码登录。</p>' +
+			'  </div>' +
+			'</div>';
+		document.body.appendChild(el);
+
+		el.querySelector('.campus-modal-backdrop').addEventListener('click', function () { el.remove(); });
+		el.querySelector('.campus-modal-close').addEventListener('click', function () { el.remove(); });
+
+		var email = el.querySelector('.campus-pwd-email');
+		var code = el.querySelector('.campus-pwd-code');
+		var pass = el.querySelector('.campus-pwd-pass');
+		var send = el.querySelector('.campus-pwd-send');
+		var submit = el.querySelector('.campus-pwd-submit');
+
+		send.addEventListener('click', function () {
+			var e = (email.value || '').trim();
+			if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return campusAlert('error', '请填写正确的邮箱');
+
+			send.disabled = true;
+			postJson('/api/campus/password/send', { email: e })
+				.then(function (d) {
+					campusAlert('success', '验证码已发送到 ' + (d.email || e));
+					startCooldown(send, 60);
+					code.focus();
+				})
+				.catch(function (err) {
+					send.disabled = false;
+					campusAlert('error', err.message);
+				});
+		});
+
+		submit.addEventListener('click', function () {
+			var e = (email.value || '').trim();
+			var c = (code.value || '').replace(/\D/g, '');
+			var p = pass.value || '';
+
+			if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return campusAlert('error', '请填写正确的邮箱');
+			if (c.length !== 6) return campusAlert('error', '请输入 6 位验证码');
+			if (p.length < 6) return campusAlert('error', '新密码至少 6 位');
+
+			submit.disabled = true;
+			postJson('/api/campus/password/reset', { email: e, code: c, password: p })
+				.then(function () {
+					el.remove();
+					campusAlert('success', '密码已修改，请用新密码登录');
+				})
+				.catch(function (err) {
+					submit.disabled = false;
+					campusAlert('error', err.message);
+				});
+		});
+
+		setTimeout(function () { email.focus(); }, 50);
+	}
+
 	function buildVerifyModal() {
 		var user = (window.app && window.app.user) || {};
 		var uid = parseInt(user.uid, 10) || 0;
@@ -659,6 +882,8 @@
 			buildNavSearch();
 			bindUidBadges();
 			buildVerifyModal();
+			enhanceRegister();
+			enhanceLogin();
 			enhanceComposer();
 			enhanceSubcategoryCards();
 		} catch (e) {
@@ -679,6 +904,8 @@
 				buildNavSearch();
 				bindUidBadges();
 				buildVerifyModal();
+				enhanceRegister();
+				enhanceLogin();
 				enhanceComposer();
 				enhanceSubcategoryCards();
 			} catch (e) {}

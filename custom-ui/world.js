@@ -308,7 +308,8 @@
 			document.body.classList.remove('campus-home-world');
 			var stale = document.getElementById(FEED_ID);
 			if (stale) stale.remove();
-			removeQuickFab();
+			// 其他页面也保留快发按钮，任何地方都能发帖
+			buildQuickFab();
 			return;
 		}
 
@@ -530,7 +531,9 @@
 					titleInput.value = '';
 					toast('发布成功 🌸');
 					var list = document.querySelector('.campus-world-inline .campus-world-list');
-					if (list) load(list, true);
+					if (list) {
+						load(list, true);
+					}
 				})
 				.catch(function (err) {
 					toast(err.message || '发布失败');

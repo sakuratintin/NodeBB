@@ -696,6 +696,237 @@ plugin.init = async function (params) {
 		}
 	);
 
+	// ============ 注册：先验证邮箱，再创建账号 ============
+	function regKey(email) {
+		return `campus:reg:${String(email || '').toLowerCase()}`;
+	}
+
+	router.post(
+		'/api/campus/register/send',
+		bodyParser.json({ limit: '16kb' }),
+		async (req, res) => {
+			try {
+				const user = require.main.require('./src/user');
+				const body = req.body || {};
+				const username = String(body.username || '').trim();
+				const email = String(body.email || '').trim().toLowerCase();
+				const password = String(body.password || '');
+
+				if (!username || username.length < 2) {
+					return res.status(400).json({ error: '用户名至少 2 个字符' });
+				}
+				if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+					return res.status(400).json({ error: '邮箱格式不正确' });
+				}
+				if (password.length < 6) {
+					return res.status(400).json({ error: '密码至少 6 位' });
+				}
+
+				const emailUid = await user.getUidByEmail(email);
+				if (emailUid) {
+					return res.status(400).json({ error: '这个邮箱已经注册过了' });
+				}
+				const nameUid = await user.getUidByUsername(username);
+				if (nameUid) {
+					return res.status(400).json({ error: '这个用户名已被占用' });
+				}
+
+				const last = parseInt(await db.get(regKey(email) + ':sent') || 0, 10);
+				if (last && Date.now() - last < VERIFY.resendCooldownMs) {
+					const wait = Math.ceil((VERIFY.resendCooldownMs - (Date.now() - last)) / 1000);
+					return res.status(429).json({ error: `刚刚已经发过了，${wait} 秒后再试` });
+				}
+
+				const code = String(Math.floor(100000 + Math.random() * 900000));
+				await db.set(regKey(email), JSON.stringify({
+					code,
+					expires: Date.now() + VERIFY.codeTtlMs,
+					attempts: 0,
+				}));
+				await db.set(regKey(email) + ':sent', String(Date.now()));
+
+				await sendCodeEmail(email, code);
+				return res.json({ ok: true, email: maskEmail(email) });
+			} catch (err) {
+				return res.status(500).json({ error: `验证码发送失败：${err.message}` });
+			}
+		}
+	);
+
+	router.post(
+		'/api/campus/register/verify',
+		bodyParser.json({ limit: '16kb' }),
+		async (req, res) => {
+			try {
+				const user = require.main.require('./src/user');
+				const body = req.body || {};
+				const username = String(body.username || '').trim();
+				const email = String(body.email || '').trim().toLowerCase();
+				const password = String(body.password || '');
+				const input = String(body.code || '').replace(/\D/g, '');
+
+				const raw = await db.get(regKey(email));
+				if (!raw) {
+					return res.status(400).json({ error: '验证码已失效，请重新发送' });
+				}
+
+				let record;
+				try {
+					record = JSON.parse(raw);
+				} catch (e) {
+					return res.status(400).json({ error: '验证码数据异常，请重新发送' });
+				}
+
+				if (Date.now() > record.expires) {
+					await db.delete(regKey(email));
+					return res.status(400).json({ error: '验证码已过期，请重新发送' });
+				}
+
+				record.attempts = (record.attempts || 0) + 1;
+				if (record.attempts > VERIFY.maxAttempts) {
+					await db.delete(regKey(email));
+					return res.status(429).json({ error: '错误次数太多，请重新发送验证码' });
+				}
+
+				if (input !== record.code) {
+					await db.set(regKey(email), JSON.stringify(record));
+					return res.status(400).json({ error: '验证码不正确，请重新输入' });
+				}
+
+				if (await user.getUidByEmail(email)) {
+					return res.status(400).json({ error: '这个邮箱已经注册过了' });
+				}
+				if (await user.getUidByUsername(username)) {
+					return res.status(400).json({ error: '这个用户名已被占用' });
+				}
+
+				const created = await user.create({ username, password, email });
+				const uid = parseInt(created && created.uid, 10);
+
+				await user.setUserField(uid, 'email:confirmed', 1);
+				await db.delete(regKey(email));
+				await db.delete(regKey(email) + ':sent');
+
+				// 自动登录
+				let loggedIn = false;
+				try {
+					await new Promise((resolve, reject) => {
+						req.login({ uid }, (err) => (err ? reject(err) : resolve()));
+					});
+					loggedIn = true;
+				} catch (e) {
+					loggedIn = false;
+				}
+
+				return res.json({ ok: true, uid, loggedIn });
+			} catch (err) {
+				return res.status(500).json({ error: `注册失败：${err.message}` });
+			}
+		}
+	);
+
+	// ============ 忘记密码：邮箱验证后重置 ============
+	router.post(
+		'/api/campus/password/send',
+		bodyParser.json({ limit: '16kb' }),
+		async (req, res) => {
+			try {
+				const user = require.main.require('./src/user');
+				const email = String((req.body && req.body.email) || '').trim().toLowerCase();
+
+				if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+					return res.status(400).json({ error: '邮箱格式不正确' });
+				}
+
+				const uid = await user.getUidByEmail(email);
+				if (!uid) {
+					return res.status(400).json({ error: '这个邮箱还没有注册' });
+				}
+
+				const last = parseInt(await db.get(`campus:pwd:${uid}:sent`) || 0, 10);
+				if (last && Date.now() - last < VERIFY.resendCooldownMs) {
+					const wait = Math.ceil((VERIFY.resendCooldownMs - (Date.now() - last)) / 1000);
+					return res.status(429).json({ error: `刚刚已经发过了，${wait} 秒后再试` });
+				}
+
+				const code = String(Math.floor(100000 + Math.random() * 900000));
+				await db.set(`campus:pwd:${uid}`, JSON.stringify({
+					code,
+					email,
+					expires: Date.now() + VERIFY.codeTtlMs,
+					attempts: 0,
+				}));
+				await db.set(`campus:pwd:${uid}:sent`, String(Date.now()));
+
+				await sendCodeEmail(email, code);
+				return res.json({ ok: true, email: maskEmail(email) });
+			} catch (err) {
+				return res.status(500).json({ error: `验证码发送失败：${err.message}` });
+			}
+		}
+	);
+
+	router.post(
+		'/api/campus/password/reset',
+		bodyParser.json({ limit: '16kb' }),
+		async (req, res) => {
+			try {
+				const user = require.main.require('./src/user');
+				const body = req.body || {};
+				const email = String(body.email || '').trim().toLowerCase();
+				const input = String(body.code || '').replace(/\D/g, '');
+				const password = String(body.password || '');
+
+				if (password.length < 6) {
+					return res.status(400).json({ error: '新密码至少 6 位' });
+				}
+
+				const uid = await user.getUidByEmail(email);
+				if (!uid) {
+					return res.status(400).json({ error: '这个邮箱还没有注册' });
+				}
+
+				const raw = await db.get(`campus:pwd:${uid}`);
+				if (!raw) {
+					return res.status(400).json({ error: '验证码已失效，请重新发送' });
+				}
+
+				let record;
+				try {
+					record = JSON.parse(raw);
+				} catch (e) {
+					return res.status(400).json({ error: '验证码数据异常，请重新发送' });
+				}
+
+				if (Date.now() > record.expires) {
+					await db.delete(`campus:pwd:${uid}`);
+					return res.status(400).json({ error: '验证码已过期，请重新发送' });
+				}
+
+				record.attempts = (record.attempts || 0) + 1;
+				if (record.attempts > VERIFY.maxAttempts) {
+					await db.delete(`campus:pwd:${uid}`);
+					return res.status(429).json({ error: '错误次数太多，请重新发送验证码' });
+				}
+
+				if (input !== record.code) {
+					await db.set(`campus:pwd:${uid}`, JSON.stringify(record));
+					return res.status(400).json({ error: '验证码不正确，请重新输入' });
+				}
+
+				await user.setPassword(uid, password);
+				await Promise.all([
+					db.delete(`campus:pwd:${uid}`),
+					db.delete(`campus:pwd:${uid}:sent`),
+				]);
+
+				return res.json({ ok: true, username: await user.getUserField(uid, 'username') });
+			} catch (err) {
+				return res.status(500).json({ error: `修改密码失败：${err.message}` });
+			}
+		}
+	);
+
 	router.post(
 		'/api/campus-ai/chat',
 		bodyParser.json({ limit: '64kb' }),

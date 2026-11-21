@@ -3190,6 +3190,327 @@ body.campus-home-world #content > *:not(#campus-world-inline) {
 	}
 }
 
+// ===========================================================
+//  31. 注册验证码 / 忘记密码
+// ===========================================================
+.campus-code-row {
+	display: flex;
+	gap: 8px;
+	align-items: stretch;
+	margin: 8px 0 4px;
+}
+
+.campus-code-input {
+	flex: 1;
+	min-width: 0;
+	padding: 11px 14px;
+	font-size: 17px;
+	font-weight: 600;
+	letter-spacing: 4px;
+	color: #3f3f46;
+	text-align: center;
+	background: #fdfbfc;
+	border: 1px solid #f2e0e8;
+	border-radius: 12px;
+
+	&:focus {
+		outline: 0;
+		background: #fff;
+		border-color: #f7a8c4;
+		box-shadow: 0 0 0 3px rgba(247, 96, 138, 0.12);
+	}
+
+	&::placeholder {
+		color: #d4c3ca;
+		font-weight: 400;
+		letter-spacing: 1px;
+	}
+}
+
+.campus-code-send,
+.campus-pwd-send {
+	flex: 0 0 auto;
+	min-width: 108px;
+	padding: 0 14px;
+	color: #fff;
+	font-size: 13.5px;
+	font-weight: 600;
+	white-space: nowrap;
+	cursor: pointer;
+	background: linear-gradient(135deg, #ff8fb1, #f7608a);
+	border: 0;
+	border-radius: 12px;
+	transition: transform 0.16s ease, opacity 0.16s ease;
+
+	&:active {
+		transform: scale(0.97);
+	}
+
+	&:disabled {
+		opacity: 0.6;
+		cursor: default;
+	}
+}
+
+.campus-code-hint {
+	margin: 2px 0 10px;
+	color: #9aa3af;
+	font-size: 12px;
+	line-height: 1.6;
+}
+
+.campus-forgot {
+	display: block;
+	width: 100%;
+	padding: 10px 0 2px;
+	color: #b05a78;
+	font-size: 13px;
+	text-align: center;
+	cursor: pointer;
+	background: transparent;
+	border: 0;
+	transition: color 0.16s ease;
+
+	&:hover {
+		color: #f7608a;
+		text-decoration: underline;
+	}
+}
+
+// 通用弹窗
+.campus-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 1100;
+
+	.campus-modal-backdrop {
+		position: absolute;
+		inset: 0;
+		background: rgba(17, 24, 39, 0.45);
+		backdrop-filter: blur(3px);
+	}
+
+	.campus-modal-card {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: min(400px, calc(100vw - 32px));
+		max-height: 88vh;
+		overflow-y: auto;
+		background: #fff;
+		border-radius: 18px;
+		box-shadow: 0 26px 60px rgba(17, 24, 39, 0.28);
+		transform: translate(-50%, -50%);
+	}
+
+	.campus-modal-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 14px 16px;
+		color: #3d3d46;
+		font-size: 15px;
+		font-weight: 700;
+		background: linear-gradient(135deg, #fff5f8, #fdeaf1);
+		border-bottom: 1px solid #f7d3e0;
+		border-radius: 18px 18px 0 0;
+
+		i {
+			color: #f7608a;
+		}
+	}
+
+	.campus-modal-close {
+		width: 28px;
+		height: 28px;
+		color: #6b7280;
+		font-size: 13px;
+		cursor: pointer;
+		background: #fff;
+		border: 1px solid #f2e0e8;
+		border-radius: 9px;
+	}
+
+	.campus-modal-body {
+		padding: 16px;
+	}
+
+	.campus-field {
+		display: block;
+		margin-bottom: 12px;
+
+		span {
+			display: block;
+			margin-bottom: 6px;
+			color: #6b7280;
+			font-size: 12.5px;
+		}
+
+		input {
+			width: 100%;
+			padding: 11px 13px;
+			font-size: 15px;
+			color: #3f3f46;
+			background: #fdfbfc;
+			border: 1px solid #f2e0e8;
+			border-radius: 12px;
+
+			&:focus {
+				outline: 0;
+				background: #fff;
+				border-color: #f7a8c4;
+				box-shadow: 0 0 0 3px rgba(247, 96, 138, 0.12);
+			}
+		}
+	}
+
+	.campus-pwd-code {
+		flex: 1;
+		min-width: 0;
+		padding: 11px 14px;
+		font-size: 17px;
+		font-weight: 600;
+		letter-spacing: 3px;
+		text-align: center;
+		background: #fdfbfc;
+		border: 1px solid #f2e0e8;
+		border-radius: 12px;
+	}
+
+	.campus-pwd-submit {
+		width: 100%;
+		padding: 13px;
+		margin-top: 6px;
+		color: #fff;
+		font-size: 15px;
+		font-weight: 700;
+		cursor: pointer;
+		background: linear-gradient(135deg, #ff8fb1, #f7608a);
+		border: 0;
+		border-radius: 12px;
+
+		&:disabled {
+			opacity: 0.65;
+		}
+	}
+
+	.campus-modal-tip {
+		margin: 10px 0 0;
+		color: #9aa3af;
+		font-size: 12px;
+		text-align: center;
+	}
+}
+
+@media (max-width: 767.98px) {
+	.campus-modal .campus-modal-card {
+		top: auto;
+		bottom: 0;
+		left: 0;
+		width: 100vw;
+		max-height: 92vh;
+		border-radius: 20px 20px 0 0;
+		transform: none;
+	}
+
+	.campus-modal .campus-modal-body {
+		padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+	}
+}
+
+// ===========================================================
+//  32. 手机端整体打磨
+// ===========================================================
+@media (max-width: 767.98px) {
+	// 页面底部给悬浮按钮让位
+	body {
+		padding-bottom: 76px;
+	}
+
+	// 世界帖子卡片：更好点
+	.campus-world-inline {
+		gap: 8px;
+	}
+
+	.campus-world-inline-head {
+		padding: 10px 14px;
+		border-radius: 14px;
+	}
+
+	.campus-world-post {
+		padding: 13px 14px;
+	}
+
+	.campus-world-post-head {
+		gap: 7px;
+	}
+
+	.campus-world-avatar {
+		width: 26px;
+		height: 26px;
+	}
+
+	.campus-world-body {
+		font-size: 14px;
+		line-height: 1.75;
+	}
+
+	.campus-like {
+		padding: 7px 14px;
+		font-size: 13px;
+	}
+
+	// 快发浮窗：手机上更贴合
+	.campus-quick-window {
+		width: calc(100vw - 24px);
+	}
+
+	.campus-quick-head {
+		padding: 12px 14px;
+	}
+
+	.campus-world-quick-text {
+		min-height: 96px;
+		font-size: 15px;
+	}
+
+	.campus-world-quick-cid,
+	.campus-world-quick-send {
+		font-size: 14px;
+	}
+
+	// 搜索框在手机抽屉里更醒目
+	.campus-search {
+		padding: 10px 14px;
+		border-radius: 14px;
+	}
+
+	.campus-search-input {
+		font-size: 15px;
+	}
+
+	.campus-search-results {
+		width: calc(100vw - 24px);
+		max-height: 60vh;
+	}
+
+	// 注册页输入框更大
+	.campus-code-input,
+	.campus-code-send {
+		font-size: 15px;
+	}
+
+	// 底部导航：图标更好点
+	.bottombar .bottombar-nav {
+		padding: 8px 12px !important;
+
+		.fa,
+		.avatar {
+			font-size: 18px;
+		}
+	}
+}
+
 // 手机底部导航里新增的图标（与原有图标保持同样大小和间距）
 .bottombar .bottombar-nav .campus-bar-btn {
 	display: inline-flex;
