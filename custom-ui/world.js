@@ -175,9 +175,28 @@
 		});
 	}
 
+	function skeletonHtml(n) {
+		var one =
+			'<div class="campus-world-post campus-skeleton">' +
+			'  <div class="campus-world-post-head">' +
+			'    <span class="campus-sk-circle"></span><span class="campus-sk-line w40"></span>' +
+			'  </div>' +
+			'  <div class="campus-sk-line w90"></div>' +
+			'  <div class="campus-sk-line w70"></div>' +
+			'</div>';
+		var out = '';
+		for (var i = 0; i < (n || 3); i += 1) out += one;
+		return out;
+	}
+
 	function renderPosts(list, posts) {
 		if (!posts || !posts.length) {
-			list.innerHTML = '<div class="campus-world-empty">还没有帖子，点右下角的笔写第一条吧 🌸</div>';
+			list.innerHTML =
+				'<div class="campus-world-empty">' +
+				'  <div class="campus-world-empty-icon">🌸</div>' +
+				'  <p>世界还很安静</p>' +
+				'  <small>点右下角的笔，发出第一条吧</small>' +
+				'</div>';
 			return;
 		}
 		list.innerHTML = posts
@@ -186,11 +205,24 @@
 				var topic = p.topic || {};
 				var cat = p.category || {};
 				var avatar = user.picture
-					? '<img class="campus-world-avatar" src="' + esc(user.picture) + '" alt="">'
+					? '<img class="campus-world-avatar" src="' + esc(user.picture) + '" alt="" loading="lazy">'
 					: '<span class="campus-world-avatar campus-world-avatar-text">' + esc((user.username || '?').slice(0, 1).toUpperCase()) + '</span>';
 				var catChip = cat.name
 					? '<span class="campus-world-cat" style="--c:' + esc(cat.bgColor || '#f7608a') + '">' + esc(cat.name) + '</span>'
 					: '';
+
+				var replies = parseInt(p.replies, 10) || 0;
+				var replyChip = replies > 0
+					? '<span class="campus-world-replies"><i class="fa fa-comment-o"></i>' + replies + '</span>'
+					: '';
+
+				// 长帖折叠
+				var plain = String(p.content || '').replace(/<[^>]+>/g, '').trim();
+				var isLong = plain.length > 280;
+				var bodyHtml =
+					'<div class="campus-world-body' + (isLong ? ' is-collapsed' : '') + '">' + (p.content || '') + '</div>' +
+					(isLong ? '<button type="button" class="campus-world-more">展开全文 <i class="fa fa-angle-down"></i></button>' : '');
+
 				// 优先用主题地址（/topic/19/标题），比 /post/37 更稳，站内跳转不会 404
 				var href = topic.slug
 					? '/topic/' + topic.slug
@@ -208,10 +240,9 @@
 					'    <a class="campus-world-user" href="/user/' + esc(user.userslug || '') + '">' + esc(user.username || '匿名') + '</a>' +
 					'    <time>' + relativeTime(p.timestamp || Date.now()) + '</time>' + catChip +
 					'  </div>' +
-					'  <div class="campus-world-body">' + (p.content || '') + '</div>' +
-					'  <div class="campus-world-post-foot">' +
-					likeHtml(p) +
-					(topic.title && topic.title !== (p.content || '').replace(/<[^>]+>/g, '').trim()
+					bodyHtml +
+					'  <div class="campus-world-post-foot">' + likeHtml(p) + replyChip +
+					(topic.title && topic.title !== plain
 						? '<span class="campus-world-link">' + esc(topic.title) + ' <i class="fa fa-angle-right"></i></span>'
 						: '') +
 					'  </div>' +
@@ -219,6 +250,20 @@
 				);
 			})
 			.join('');
+
+		// 展开 / 收起长帖
+		Array.prototype.forEach.call(list.querySelectorAll('.campus-world-more'), function (btn) {
+			btn.addEventListener('click', function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+				var body = btn.previousElementSibling;
+				if (!body) return;
+				var collapsed = body.classList.toggle('is-collapsed');
+				btn.innerHTML = collapsed
+					? '展开全文 <i class="fa fa-angle-down"></i>'
+					: '收起 <i class="fa fa-angle-up"></i>';
+			});
+		});
 
 		// 点整张卡片进帖子；卡片内的链接/图片仍按原样处理
 		Array.prototype.forEach.call(list.querySelectorAll('.campus-world-post'), function (card) {
@@ -284,7 +329,7 @@
 			return;
 		}
 		loading = true;
-		list.innerHTML = '<div class="campus-world-loading"><i class="fa fa-spinner fa-spin"></i> 正在加载…</div>';
+		list.innerHTML = skeletonHtml(3);
 		fetchMainPosts('24h')
 			.then(function (posts) { return posts && posts.length ? posts : fetchMainPosts('7d'); })
 			.then(function (posts) { return posts && posts.length ? posts : fetchMainPosts('30d'); })

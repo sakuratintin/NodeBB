@@ -2677,14 +2677,20 @@ body.campus-home-world #content > *:not(#campus-world-inline) {
 }
 
 .campus-world-inline-head {
+	position: sticky;
+	top: 56px;
+	z-index: 6;
 	display: flex;
 	gap: 12px;
 	align-items: center;
 	justify-content: space-between;
 	padding: 12px 16px;
-	background: linear-gradient(135deg, #fff5f8, #fdeaf1);
+	background: rgba(255, 245, 248, 0.92);
 	border: 1px solid #f7d3e0;
 	border-radius: 16px;
+	box-shadow: 0 2px 10px rgba(247, 96, 138, 0.06);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
 }
 
 .campus-world-title {
@@ -2748,6 +2754,105 @@ body.campus-home-world #content > *:not(#campus-world-inline) {
 	color: #9aa3af;
 	font-size: 13px;
 	text-align: center;
+}
+
+// 空状态
+.campus-world-empty {
+	padding: 56px 20px;
+	background: #fff;
+	border: 1px dashed #f2dbe4;
+	border-radius: 16px;
+
+	.campus-world-empty-icon {
+		margin-bottom: 10px;
+		font-size: 34px;
+	}
+
+	p {
+		margin: 0 0 4px;
+		color: #4b5563;
+		font-size: 15px;
+		font-weight: 600;
+	}
+
+	small {
+		color: #9aa3af;
+		font-size: 12.5px;
+	}
+}
+
+// 加载骨架
+.campus-skeleton {
+	pointer-events: none;
+
+	.campus-sk-circle {
+		width: 28px;
+		height: 28px;
+		background: #f4e8ee;
+		border-radius: 50%;
+	}
+
+	.campus-sk-line {
+		height: 12px;
+		margin-bottom: 10px;
+		background: linear-gradient(90deg, #f4e8ee 25%, #faf2f5 37%, #f4e8ee 63%);
+		background-size: 400% 100%;
+		border-radius: 6px;
+		animation: campus-sk 1.4s ease infinite;
+	}
+
+	.w40 { width: 40%; }
+	.w70 { width: 70%; }
+	.w90 { width: 90%; }
+}
+
+@keyframes campus-sk {
+	0% { background-position: 100% 50%; }
+	100% { background-position: 0 50%; }
+}
+
+// 长帖折叠
+.campus-world-body {
+	position: relative;
+
+	&.is-collapsed {
+		display: -webkit-box;
+		overflow: hidden;
+		-webkit-line-clamp: 5;
+		-webkit-box-orient: vertical;
+	}
+}
+
+.campus-world-more {
+	margin-top: 6px;
+	padding: 4px 0;
+	color: #f7608a;
+	font-size: 12.5px;
+	font-weight: 500;
+	cursor: pointer;
+	background: transparent;
+	border: 0;
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+// 回复数
+.campus-world-replies {
+	display: inline-flex;
+	gap: 4px;
+	align-items: center;
+	padding: 5px 11px;
+	color: #8b8b93;
+	font-size: 12.5px;
+	background: #fdfbfc;
+	border: 1px solid #f4e8ee;
+	border-radius: 999px;
+
+	i {
+		font-size: 13px;
+	}
 }
 
 // ---------- 单条帖子 ----------
@@ -2837,7 +2942,9 @@ body.campus-home-world #content > *:not(#campus-world-inline) {
 	img,
 	video {
 		max-width: 100%;
+		max-height: 340px;
 		height: auto;
+		object-fit: cover;
 		border-radius: 10px;
 	}
 
