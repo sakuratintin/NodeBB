@@ -308,8 +308,7 @@
 			document.body.classList.remove('campus-home-world');
 			var stale = document.getElementById(FEED_ID);
 			if (stale) stale.remove();
-			// 其他页面也保留快发按钮，任何地方都能发帖
-			buildQuickFab();
+			removeQuickFab();
 			return;
 		}
 
@@ -347,10 +346,101 @@
 		var fab = document.createElement('button');
 		fab.id = 'campus-quick-fab';
 		fab.type = 'button';
-		fab.title = '快速发帖';
+		fab.title = '快速发帖（可拖动）';
 		fab.innerHTML = '<i class="fa fa-pen"></i>';
-		fab.addEventListener('click', toggleQuickWindow);
+
+		// 拖动后不再触发打开（避免误触）
+		var moved = false;
+
+		fab.addEventListener('click', function () {
+			if (moved) {
+				moved = false;
+				return;
+			}
+			toggleQuickWindow();
+		});
+
 		document.body.appendChild(fab);
+		makeFabDraggable(fab, function () { moved = true; });
+		restoreFabPos(fab);
+	}
+
+	function restoreFabPos(fab) {
+		try {
+			var saved = JSON.parse(localStorage.getItem('campusQuickFabPos') || 'null');
+			if (saved && typeof saved.x === 'number' && typeof saved.y === 'number') {
+				placeFab(fab, saved.x, saved.y);
+			}
+		} catch (e) {}
+	}
+
+	function placeFab(fab, x, y) {
+		var w = fab.offsetWidth || 50;
+		var h = fab.offsetHeight || 50;
+		x = Math.max(8, Math.min(x, window.innerWidth - w - 8));
+		y = Math.max(8, Math.min(y, window.innerHeight - h - 8));
+		fab.style.left = x + 'px';
+		fab.style.top = y + 'px';
+		fab.style.right = 'auto';
+		fab.style.bottom = 'auto';
+	}
+
+	function makeFabDraggable(fab, onMoved) {
+		var dragging = false;
+		var moved = false;
+		var startX = 0;
+		var startY = 0;
+		var originX = 0;
+		var originY = 0;
+
+		fab.style.touchAction = 'none';
+
+		fab.addEventListener('pointerdown', function (e) {
+			if (e.button !== undefined && e.button !== 0) return;
+			var r = fab.getBoundingClientRect();
+			originX = r.left;
+			originY = r.top;
+			startX = e.clientX;
+			startY = e.clientY;
+			dragging = true;
+			moved = false;
+			if (fab.setPointerCapture) {
+				try { fab.setPointerCapture(e.pointerId); } catch (err) {}
+			}
+		});
+
+		fab.addEventListener('pointermove', function (e) {
+			if (!dragging) return;
+			var dx = e.clientX - startX;
+			var dy = e.clientY - startY;
+			if (!moved && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) moved = true;
+			if (!moved) return;
+			placeFab(fab, originX + dx, originY + dy);
+			if (e.cancelable) e.preventDefault();
+		});
+
+		function end() {
+			if (!dragging) return;
+			dragging = false;
+			if (moved) {
+				if (onMoved) onMoved();
+				var r = fab.getBoundingClientRect();
+				placeFab(fab, r.left, r.top);
+				try {
+					localStorage.setItem('campusQuickFabPos', JSON.stringify({ x: r.left, y: r.top }));
+				} catch (e) {}
+			}
+		}
+
+		fab.addEventListener('pointerup', end);
+		fab.addEventListener('pointercancel', end);
+
+		window.addEventListener('resize', function () {
+			if (fab.style.left) {
+				var r = fab.getBoundingClientRect();
+				placeFab(fab, r.left, r.top);
+			}
+		});
 	}
 
 	function toggleQuickWindow() {
@@ -561,8 +651,9 @@
 			}
 		}
 
-		// 手机底部导航：只加「热点速看」（首页本身就是世界，无需再加地球图标）
-		var bar = document.querySelector('.bottombar .bottombar-nav');
+		// 手机底部导航：把「热点」放进左侧图标组，保持原有排版
+		var left = document.querySelector('.bottombar .bottombar-nav-left');
+		var bar = left || document.querySelector('.bottombar .bottombar-nav');
 		if (bar && !bar.dataset.campusExtra) {
 			bar.dataset.campusExtra = '1';
 

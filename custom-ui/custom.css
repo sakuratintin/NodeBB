@@ -3531,42 +3531,71 @@ body.campus-home-world #content > *:not(#campus-world-inline) {
 	}
 }
 
-// 底部导航整体：图标均匀分布，别挤在一起
+// 底部导航：保留原来的「左一组 + 右一组」布局，只把间距和点击区域调顺
 .bottombar .bottombar-nav {
-	display: flex !important;
-	gap: 2px;
-	align-items: center;
-	justify-content: space-around;
+	padding: 8px 16px !important;
+	gap: 4px;
 
-	> a,
-	> .pointer,
-	> button {
+	.bottombar-nav-left,
+	.bottombar-nav-right {
+		display: flex !important;
+		gap: 14px !important;
+		align-items: center;
+	}
+
+	// 每个图标至少 44px 的可点击高度，手指不容易点错
+	.bottombar-nav-left > div,
+	.bottombar-nav-left > a,
+	.bottombar-nav-right > div,
+	.bottombar-nav-right > a,
+	.campus-bar-btn {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		flex: 0 0 auto;
+		min-width: 40px;
+		min-height: 40px;
+		padding: 0 2px;
+		border-radius: 12px;
+		transition: background-color 0.16s ease, transform 0.16s ease;
+
+		&:active {
+			background: #fdf2f6;
+			transform: scale(0.94);
+		}
 	}
 
 	.fa,
 	.avatar {
-		font-size: 17px;
+		font-size: 19px;
+	}
+
+	.avatar {
+		width: 26px;
+		height: 26px;
 	}
 }
 
 @media (max-width: 400px) {
 	.bottombar .bottombar-nav {
-		padding: 6px 8px !important;
-		margin: 0 6px 8px;
+		padding: 6px 10px !important;
 
+		.bottombar-nav-left,
+		.bottombar-nav-right {
+			gap: 8px !important;
+		}
+
+		.bottombar-nav-left > div,
+		.bottombar-nav-left > a,
+		.bottombar-nav-right > div,
+		.bottombar-nav-right > a,
 		.campus-bar-btn {
-			width: 30px;
-			height: 30px;
-			font-size: 15px;
+			min-width: 34px;
+			min-height: 34px;
 		}
 
 		.fa,
 		.avatar {
-			font-size: 15px;
+			font-size: 16px;
 		}
 	}
 }
