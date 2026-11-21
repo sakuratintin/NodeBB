@@ -3419,8 +3419,136 @@ body.campus-home-world #content > *:not(#campus-world-inline) {
 }
 
 // ===========================================================
-//  32. 手机端整体打磨
+//  33. 登录 / 注册页面打磨
 // ===========================================================
+.page-login,
+.page-register {
+	// 卡片整体
+	.card,
+	.login-card,
+	.register-card,
+	[component="login/local"],
+	[component="register/local"] {
+		box-shadow: none;
+	}
+
+	.card {
+		padding: 22px 20px;
+		background: #fff;
+		border: 1px solid #f4e8ee;
+		border-radius: 20px;
+		box-shadow: 0 14px 38px rgba(247, 96, 138, 0.09);
+	}
+
+	// 标题更柔和
+	h2,
+	h3,
+	.card-header {
+		font-size: 22px;
+		font-weight: 700;
+		letter-spacing: 1px;
+	}
+
+	// 输入框统一加大
+	.form-control {
+		height: 48px;
+		padding: 0 14px;
+		font-size: 15px;
+		background: #fdfbfc;
+		border: 1px solid #f2e0e8;
+		border-radius: 13px;
+		transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+
+		&:focus {
+			background: #fff;
+			border-color: #f7a8c4;
+			box-shadow: 0 0 0 4px rgba(247, 96, 138, 0.12);
+		}
+
+		&::placeholder {
+			color: #c2b3ba;
+		}
+	}
+
+	// 主按钮
+	.btn-primary,
+	button[type="submit"],
+	#login-form button[type="submit"] {
+		width: 100%;
+		height: 48px;
+		font-size: 15.5px;
+		font-weight: 700;
+		letter-spacing: 1px;
+		background: linear-gradient(135deg, #ff8fb1, #f7608a);
+		border: 0;
+		border-radius: 13px;
+		box-shadow: 0 8px 22px rgba(247, 96, 138, 0.28);
+		transition: transform 0.16s ease, box-shadow 0.16s ease;
+
+		&:hover {
+			box-shadow: 0 12px 28px rgba(247, 96, 138, 0.34);
+			transform: translateY(-1px);
+		}
+
+		&:active {
+			transform: scale(0.99);
+		}
+	}
+
+	// 提示文字
+	.form-text,
+	small.text-muted,
+	.help-text {
+		color: #9aa3af;
+		font-size: 12px;
+	}
+
+	// 底部其他方式登录 / 注册的链接
+	.alt-login,
+	.register-link,
+	.login-link {
+		margin-top: 12px;
+		color: #b05a78;
+		font-size: 13px;
+		text-align: center;
+	}
+
+	// 头像选择器（注册页可能有）
+	.avatar-picker {
+		border-radius: 14px;
+	}
+}
+
+@media (max-width: 767.98px) {
+	.page-login,
+	.page-register {
+		.card {
+			padding: 18px 16px;
+			border-radius: 18px;
+		}
+
+		.form-control {
+			height: 50px;
+			font-size: 16px; // 防止 iOS 聚焦放大
+		}
+
+		.btn-primary,
+		button[type="submit"] {
+			height: 50px;
+			font-size: 16px;
+		}
+
+		// 注册页验证码行在窄屏也不挤
+		.campus-code-row {
+			gap: 6px;
+		}
+
+		.campus-code-send {
+			min-width: 96px;
+			font-size: 13px;
+		}
+	}
+}
 @media (max-width: 767.98px) {
 	// 页面底部给悬浮按钮让位
 	body {

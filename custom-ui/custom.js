@@ -506,6 +506,42 @@
 		setTimeout(function () { email.focus(); }, 50);
 	}
 
+	// ---------- 导航整理：去掉「标签」，把「热门」改为「世界」 ----------
+	function tidyNavigation() {
+		var lists = document.querySelectorAll('.navigation-dropdown li.nav-item, #main-nav li.nav-item');
+		Array.prototype.forEach.call(lists, function (li) {
+			var link = li.querySelector('a.nav-link') || li.querySelector('a');
+			if (!link) return;
+			var text = (link.textContent || '').replace(/\s+/g, '');
+			var icon = link.querySelector('i.fa');
+
+			// 去掉「标签」
+			if (text.indexOf('标签') !== -1) {
+				li.remove();
+				return;
+			}
+
+			// 「热门」→「世界」
+			if (text.indexOf('热门') !== -1 && !li.dataset.campusWorld) {
+				li.dataset.campusWorld = '1';
+				link.setAttribute('href', '/');
+				var label = link.querySelector('.nav-text');
+				if (label) {
+					label.textContent = '世界';
+				} else {
+					link.textContent = '世界';
+				}
+				if (icon) icon.className = 'fa fa-fw fa-globe';
+				link.setAttribute('title', '世界');
+				link.addEventListener('click', function (e) {
+					e.preventDefault();
+					if (window.ajaxify && window.ajaxify.go) window.ajaxify.go('/');
+					else window.location.href = '/';
+				});
+			}
+		});
+	}
+
 	function buildVerifyModal() {
 		var user = (window.app && window.app.user) || {};
 		var uid = parseInt(user.uid, 10) || 0;
@@ -881,6 +917,7 @@
 			markCurrentNav();
 			buildNavSearch();
 			bindUidBadges();
+			tidyNavigation();
 			buildVerifyModal();
 			enhanceRegister();
 			enhanceLogin();
@@ -903,6 +940,7 @@
 				markCurrentNav();
 				buildNavSearch();
 				bindUidBadges();
+				tidyNavigation();
 				buildVerifyModal();
 				enhanceRegister();
 				enhanceLogin();
