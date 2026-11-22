@@ -20,6 +20,7 @@ const jsParts = [
 	path.join(root, 'custom-ui', 'custom.js'),
 	path.join(root, 'custom-ui', 'hot.js'),
 	path.join(root, 'custom-ui', 'world.js'),
+	path.join(root, 'custom-ui', 'favicon.js'),
 	path.join(root, 'plugins', 'nodebb-plugin-campus-ai', 'public', 'ai-chat.js'),
 ];
 

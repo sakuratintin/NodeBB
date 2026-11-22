@@ -17,6 +17,7 @@ const jsParts = [
 	path.join(__dirname, 'custom-ui', 'custom.js'),
 	path.join(__dirname, 'custom-ui', 'hot.js'),
 	path.join(__dirname, 'custom-ui', 'world.js'),
+	path.join(__dirname, 'custom-ui', 'favicon.js'),
 	path.join(__dirname, 'plugins', 'nodebb-plugin-campus-ai', 'public', 'ai-chat.js'),
 ];
 
