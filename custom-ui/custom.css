@@ -3567,6 +3567,42 @@ body.campus-home-world #content > *:not(#campus-world-inline) {
 }
 
 @media (max-width: 767.98px) {
+	// ---------- 滚动体验：去掉卡顿源 ----------
+	html,
+	body {
+		overflow-x: hidden;
+		overscroll-behavior-y: none;
+	}
+
+	// 主页内容不再固定 100% 高度，交还给页面自然滚动
+	body.campus-home-world #content {
+		height: auto !important;
+		min-height: auto !important;
+		overflow: visible !important;
+	}
+
+	body.campus-home-world #content > .campus-world-inline {
+		overflow: visible;
+	}
+
+	// 手机上取消吸顶（吸顶元素 + 移动端惯性滚动会互相打架，产生「抖」的感觉）
+	.campus-world-inline-head {
+		position: static;
+		top: auto;
+		box-shadow: none;
+	}
+
+	// 卡片不用 transform 做悬停位移（触屏下会造成重绘抖动）
+	.campus-world-post:active,
+	.campus-world-post:hover {
+		transform: none;
+	}
+
+	// 内容区不再嵌套滚动
+	.campus-world-list {
+		overflow: visible;
+	}
+
 	// ---------- 手机：快发变成底部抽屉，不再用拖动小窗 ----------
 	.campus-quick-window.is-sheet {
 		top: auto;
@@ -3580,6 +3616,7 @@ body.campus-home-world #content > *:not(#campus-world-inline) {
 		box-shadow: 0 -14px 40px rgba(17, 24, 39, 0.22);
 		animation: campus-sheet-up 0.22s ease;
 		padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+		transition: bottom 0.12s linear;
 	}
 
 	.campus-quick-window.is-sheet .campus-quick-head {

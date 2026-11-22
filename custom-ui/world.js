@@ -413,6 +413,7 @@
 			quickEl.remove();
 			quickEl = null;
 		}
+		if (kbCleanup) kbCleanup();
 	}
 
 	function buildQuickFab() {
@@ -521,6 +522,7 @@
 		if (quickEl) {
 			quickEl.remove();
 			quickEl = null;
+			if (kbCleanup) kbCleanup();
 			return;
 		}
 		quickEl = buildQuickWindow();
@@ -533,9 +535,41 @@
 		if (!isMobile) {
 			positionDefault(quickEl);
 			makeDraggable(quickEl, quickEl.querySelector('.campus-quick-head'));
+		} else {
+			trackKeyboard(quickEl);
 		}
 
 		quickEl.querySelector('.campus-world-quick-text').focus();
+	}
+
+	// 手机键盘弹出时，把发帖抽屉顶上去，别被输入法盖住
+	var kbCleanup = null;
+
+	function trackKeyboard(sheet) {
+		if (kbCleanup) kbCleanup();
+
+		var vv = window.visualViewport;
+		if (!vv) return;
+
+		function apply() {
+			// 可视区域比窗口小多少，就是键盘占了多少
+			var kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+			sheet.style.bottom = kb + 'px';
+			sheet.style.maxHeight = Math.max(220, Math.round(vv.height - 24)) + 'px';
+		}
+
+		apply();
+		vv.addEventListener('resize', apply);
+		vv.addEventListener('scroll', apply);
+		window.addEventListener('orientationchange', apply);
+
+		kbCleanup = function () {
+			if (!vv) return;
+			vv.removeEventListener('resize', apply);
+			vv.removeEventListener('scroll', apply);
+			window.removeEventListener('orientationchange', apply);
+			kbCleanup = null;
+		};
 	}
 
 	function positionDefault(el) {
@@ -568,6 +602,7 @@
 		el.querySelector('.campus-quick-close').addEventListener('click', function () {
 			el.remove();
 			quickEl = null;
+			if (kbCleanup) kbCleanup();
 		});
 
 		bindQuickPost(el);
