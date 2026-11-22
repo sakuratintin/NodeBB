@@ -474,6 +474,37 @@ plugin.init = async function (params) {
 	});
 
 	// 搜索建议：按用户名或 UID 找人
+	// ---------- 站点图标（由插件直接提供，避免把 base64 塞进 JS） ----------
+	const ICON_FILES = {
+		'64': 'icon-64.png',
+		'180': 'icon-180.png',
+		'192': 'icon-192.png',
+		'512': 'icon-512.png',
+		'favicon.ico': 'favicon.ico',
+	};
+
+	router.get('/campus-icon/:name', async (req, res) => {
+		try {
+			const fs = require('fs');
+			const path = require('path');
+			const name = String(req.params.name || '');
+			const file = ICON_FILES[name];
+			if (!file) {
+				return res.status(404).end();
+			}
+			const full = path.join(__dirname, 'assets', file);
+			if (!fs.existsSync(full)) {
+				return res.status(404).end();
+			}
+			const type = file.endsWith('.ico') ? 'image/x-icon' : 'image/png';
+			res.setHeader('Content-Type', type);
+			res.setHeader('Cache-Control', 'public, max-age=604800');
+			return res.sendFile(full);
+		} catch (err) {
+			return res.status(500).end();
+		}
+	});
+
 	// ---------- 站内搜索：用户 + 帖子（解决中文分词搜不到的问题） ----------
 	router.get('/api/campus/find', async (req, res) => {
 		const q = String((req.query && req.query.q) || '').trim();

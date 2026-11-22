@@ -302,6 +302,35 @@
 		});
 
 		bindLike(list);
+
+		// 「看更早的帖子」
+		var oldBtn = list.querySelector('.campus-world-loadmore');
+		if (oldBtn) oldBtn.remove();
+
+		if (posts.length >= 5 && !list.dataset.loadedAll) {
+			var btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'campus-world-loadmore';
+			btn.innerHTML = '看更早的帖子 <i class="fa fa-angle-down"></i>';
+			btn.addEventListener('click', function () {
+				btn.disabled = true;
+				btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 加载中…';
+				fetchMainPosts('365d').then(function (older) {
+					var have = {};
+					(cached || []).forEach(function (p) { have[p.tid] = 1; });
+					var fresh = (older || []).filter(function (p) { return p && !have[p.tid]; });
+					if (!fresh.length) {
+						list.dataset.loadedAll = '1';
+						btn.remove();
+						toast('已经到底啦 🌸');
+						return;
+					}
+					cached = (cached || []).concat(fresh);
+					renderPosts(list, cached);
+				});
+			});
+			list.appendChild(btn);
+		}
 	}
 
 	function fetchPosts(term) {
@@ -495,9 +524,17 @@
 			return;
 		}
 		quickEl = buildQuickWindow();
+
+		var isMobile = window.innerWidth <= 767;
+		if (isMobile) quickEl.classList.add('is-sheet');
+
 		document.body.appendChild(quickEl);
-		positionDefault(quickEl);
-		makeDraggable(quickEl, quickEl.querySelector('.campus-quick-head'));
+
+		if (!isMobile) {
+			positionDefault(quickEl);
+			makeDraggable(quickEl, quickEl.querySelector('.campus-quick-head'));
+		}
+
 		quickEl.querySelector('.campus-world-quick-text').focus();
 	}
 

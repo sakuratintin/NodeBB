@@ -3526,8 +3526,151 @@ body.campus-home-world #content > *:not(#campus-world-inline) {
 }
 
 // ===========================================================
-//  33. 登录 / 注册页面打磨
+//  34. 手机端真·优化（发帖底部抽屉 / 阅读体验 / 触控尺寸）
 // ===========================================================
+
+// 「看更早的帖子」
+.campus-world-loadmore {
+	display: block;
+	width: 100%;
+	padding: 13px 0;
+	margin: 4px 0 10px;
+	color: #f7608a;
+	font-size: 13.5px;
+	font-weight: 600;
+	cursor: pointer;
+	background: #fff;
+	border: 1px dashed #f2dbe4;
+	border-radius: 14px;
+	transition: background-color 0.16s ease, border-color 0.16s ease;
+
+	&:hover {
+		background: #fdf6f9;
+		border-color: #f7c6d8;
+	}
+
+	&:disabled {
+		opacity: 0.7;
+		cursor: default;
+	}
+}
+
+@keyframes campus-sheet-up {
+	from {
+		opacity: 0;
+		transform: translateY(18px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (max-width: 767.98px) {
+	// ---------- 手机：快发变成底部抽屉，不再用拖动小窗 ----------
+	.campus-quick-window.is-sheet {
+		top: auto;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		width: 100vw;
+		max-height: 82vh;
+		overflow-y: auto;
+		border-radius: 20px 20px 0 0;
+		box-shadow: 0 -14px 40px rgba(17, 24, 39, 0.22);
+		animation: campus-sheet-up 0.22s ease;
+		padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+	}
+
+	.campus-quick-window.is-sheet .campus-quick-head {
+		position: sticky;
+		top: 0;
+		z-index: 2;
+		padding: 14px 16px;
+		border-radius: 20px 20px 0 0;
+	}
+
+	// 抽屉里的按钮更大，拇指好按
+	.campus-quick-window.is-sheet .campus-world-quick-send {
+		min-height: 46px;
+		padding: 0 20px;
+		font-size: 15px;
+	}
+
+	.campus-quick-window.is-sheet .campus-world-quick-cid {
+		min-height: 46px;
+		font-size: 14.5px;
+	}
+
+	.campus-quick-window.is-sheet .campus-world-quick-text {
+		min-height: 120px;
+		font-size: 16px; // 防 iOS 聚焦放大
+	}
+
+	// ---------- 帖子页阅读体验 ----------
+	.topic .posts .content {
+		font-size: 16px;
+		line-height: 1.9;
+		word-break: break-word;
+	}
+
+	.topic .posts .content img,
+	.topic .posts .content video {
+		max-width: 100%;
+		height: auto;
+		border-radius: 10px;
+	}
+
+	.topic .posts .content pre {
+		max-width: 100%;
+		overflow-x: auto;
+		border-radius: 10px;
+	}
+
+	.topic .posts .content blockquote {
+		padding: 8px 12px;
+		font-size: 15px;
+		border-radius: 10px;
+	}
+
+	// 帖子之间的间距更透气
+	.topic [component="post"] {
+		padding: 12px 4px !important;
+	}
+
+	// 楼层操作按钮加大触控面积
+	.topic [component="post"] .votes,
+	.topic [component="post"] .post-tools .btn,
+	.topic [component="post"] .post-tools a {
+		min-width: 38px;
+		min-height: 38px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	// ---------- 通用触控优化 ----------
+	.btn,
+	.nav-link,
+	.dropdown-item {
+		min-height: 40px;
+	}
+
+	// 输入框 16px，避免 iOS 自动放大
+	input,
+	textarea,
+	select {
+		font-size: max(16px, 1em);
+	}
+
+	// 表格 / 代码块不要撑破屏幕
+	.post-content table,
+	.topic .content table {
+		display: block;
+		max-width: 100%;
+		overflow-x: auto;
+	}
+}
 .page-login,
 .page-register {
 	// 卡片整体
